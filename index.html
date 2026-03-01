@@ -793,7 +793,7 @@ function exportJSON(){
 // ════════════════════════════════════════════════
 
 // ⚠️ REEMPLAZÁ esto con tu Client ID de Google Cloud Console
-const DRIVE_CLIENT_ID = '350319287742-0j0tl5b32addfg0spa7ag5ik28c38u1t.apps.googleusercontent.com';
+const DRIVE_CLIENT_ID = localStorage.getItem('rmDriveClientId') || '';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 const DRIVE_FILE_NAME = 'registro_musical_2026.json';
 
@@ -2752,3 +2752,4 @@ document.addEventListener('DOMContentLoaded', updateNetStatus);
 </script>
 </body>
 </html>
+
