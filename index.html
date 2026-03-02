@@ -448,12 +448,12 @@ input[type=number]{-moz-appearance:textfield}
     <span id="net-status" title="Estado de conexión" style="font-size:13px;cursor:default">🟢</span>
     <span class="save-pill" id="save-ind">● Sin cambios</span>
     <button id="btn-drive-upload" onclick="syncToDrive()" title="Subir datos a Drive"
-      style="display:none;padding:5px 12px;border-radius:8px;border:1px solid #16a34a;
+      style="padding:5px 12px;border-radius:8px;border:1px solid #16a34a;
       background:#dcfce7;font-size:12px;font-weight:600;cursor:pointer;color:#15803d;transition:all .2s">
       ⬆️ Subir
     </button>
     <button id="btn-drive-restore" onclick="confirmRestoreFromDrive()" title="Restaurar datos desde Drive"
-      style="display:none;padding:5px 12px;border-radius:8px;border:1px solid #2563eb;
+      style="padding:5px 12px;border-radius:8px;border:1px solid #2563eb;
       background:#dbeafe;font-size:12px;font-weight:600;cursor:pointer;color:#1d4ed8;transition:all .2s">
       ⬇️ Restaurar
     </button>
@@ -858,8 +858,7 @@ function updateDriveUI(connected) {
       status.textContent = lastSyncTime ? '⟳ ' + lastSyncTime : '⟳ Sincronizado';
       status.style.color = '#16a34a';
     }
-    if (btnUp) btnUp.style.display = 'inline-block';
-    if (btnRest) btnRest.style.display = 'inline-block';
+
     // Mostrar botón en landing si aún está visible
     const landingArea = document.getElementById('drive-landing-area');
     const landingScreen = document.getElementById('screen-landing');
@@ -872,8 +871,7 @@ function updateDriveUI(connected) {
     btn.style.borderColor = '';
     btn.style.color = '';
     if (status) { status.textContent = ''; }
-    if (btnUp) btnUp.style.display = 'none';
-    if (btnRest) btnRest.style.display = 'none';
+
   }
 }
 
@@ -1011,6 +1009,25 @@ window.addEventListener('offline', () => {
 
 // ── Botón Drive ──
 function confirmRestoreFromDrive() {
+  if (!driveToken) {
+    if (confirm('Primero necesitás conectarte a Google Drive. ¿Conectar ahora?')) {
+      google.accounts.oauth2.initTokenClient({
+        client_id: DRIVE_CLIENT_ID,
+        scope: DRIVE_SCOPE,
+        callback: async (resp) => {
+          if (!resp.error && resp.access_token) {
+            driveToken = resp.access_token;
+            updateDriveUI(true);
+            startAutoSync();
+            if (confirm('✅ Conectado. ¿Restaurar datos desde Drive ahora?')) {
+              loadFromDrive();
+            }
+          }
+        }
+      }).requestAccessToken();
+    }
+    return;
+  }
   if (confirm('¿Restaurar datos desde Google Drive? Se reemplazarán los datos actuales.')) {
     loadFromDrive();
   }
