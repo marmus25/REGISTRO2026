@@ -978,21 +978,22 @@ window.addEventListener('offline', () => {
 
 // ── Configurar Client ID ──
 function configurarDrive() {
+  const conectado = driveToken ? true : false;
   openModal(`
     <div class="modal-title">☁️ Google Drive</div>
     <p style="font-size:12px;color:var(--muted);margin-bottom:12px">
-      Client ID configurado. Tocá <b>Conectar</b> para sincronizar con tu cuenta de Google.</p>
-    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px;margin-bottom:12px;font-size:10px;color:#0369a1;font-family:monospace;word-break:break-all">
+      ${conectado ? '✅ Conectado y sincronizando.' : 'Tocá <b>Conectar</b> para sincronizar con Google Drive.'}</p>
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px;margin-bottom:14px;font-size:10px;color:#0369a1;font-family:monospace;word-break:break-all">
       ${DRIVE_CLIENT_ID}
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal()">Cerrar</button>
       <button class="btn btn-outline" onclick="desconectarDrive()">Desconectar</button>
-      <button class="btn btn-blue" onclick="closeModal();initDriveAuth()">Conectar</button>
-    </div>`);
+      <button class="btn btn-green" onclick="closeModal();loadFromDrive()">⬇️ Restaurar desde Drive</button>
+      <button class="btn btn-blue" onclick="closeModal();initDriveAuth()">🔗 Conectar</button>
+    </div>\`);
 }
-
-function guardarClientId() {
+unction guardarClientId() {
   const val = document.getElementById('drive-client-id-inp').value.trim();
   if (!val) { showToast('Ingresá el Client ID', 'err'); return; }
   localStorage.setItem('rmDriveClientId', val);
@@ -1011,10 +1012,9 @@ function desconectarDrive() {
   showToast('Drive desconectado', 'ok');
 }
 
-// Inicializar al cargar si hay client ID
+// Inicializar al cargar
 window.addEventListener('load', () => {
   if (DRIVE_CLIENT_ID && navigator.onLine) {
-    // Auto-reconectar silenciosamente
     setTimeout(() => {
       try {
         const client = google.accounts.oauth2.initTokenClient({
