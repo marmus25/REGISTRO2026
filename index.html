@@ -448,7 +448,7 @@ input[type=number]{-moz-appearance:textfield}
     <span id="net-status" title="Estado de conexión" style="font-size:13px;cursor:default">🟢</span>
     <span class="save-pill" id="save-ind">● Sin cambios</span>
     <div style="display:inline-flex;flex-direction:column;align-items:center">
-      <button id="drive-btn" onclick="configurarDrive()"
+      <button id="drive-btn" onclick="handleDriveBtn()"
         title="Sincronizar con Google Drive"
         style="padding:5px 12px;border-radius:8px;border:1px solid #ced4da;
         background:#f8f9fa;font-size:12px;font-weight:600;cursor:pointer;
@@ -976,6 +976,11 @@ window.addEventListener('offline', () => {
   showToast('📵 Sin conexión — modo offline activo', 'err');
 });
 
+// ── Botón Drive ──
+function handleDriveBtn() {
+  if (driveToken) { configurarDrive(); } else { initDriveAuth(); }
+}
+
 // ── Configurar Client ID ──
 function configurarDrive() {
   const conectado = driveToken ? true : false;
@@ -991,15 +996,9 @@ function configurarDrive() {
       <button class="btn btn-outline" onclick="desconectarDrive()">Desconectar</button>
       <button class="btn btn-green" onclick="closeModal();loadFromDrive()">⬇️ Restaurar desde Drive</button>
       <button class="btn btn-blue" onclick="closeModal();initDriveAuth()">🔗 Conectar</button>
-    </div>\`);
+    </div>`);
 }
-unction guardarClientId() {
-  const val = document.getElementById('drive-client-id-inp').value.trim();
-  if (!val) { showToast('Ingresá el Client ID', 'err'); return; }
-  localStorage.setItem('rmDriveClientId', val);
-  closeModal();
-  location.reload();
-}
+
 
 function desconectarDrive() {
   localStorage.removeItem('rmDriveClientId');
@@ -1012,26 +1011,27 @@ function desconectarDrive() {
   showToast('Drive desconectado', 'ok');
 }
 
-// Inicializar al cargar
+// Inicializar al cargar - reconexión silenciosa
 window.addEventListener('load', () => {
   if (DRIVE_CLIENT_ID && navigator.onLine) {
     setTimeout(() => {
       try {
-        const client = google.accounts.oauth2.initTokenClient({
+        google.accounts.oauth2.initTokenClient({
           client_id: DRIVE_CLIENT_ID,
           scope: DRIVE_SCOPE,
-          prompt: '',
+          prompt: 'none',
           callback: (resp) => {
-            if (!resp.error) {
+            if (!resp.error && resp.access_token) {
               driveToken = resp.access_token;
               updateDriveUI(true);
               startAutoSync();
             }
-          }
-        });
-        client.requestAccessToken({prompt: ''});
+            // Si falla silenciosamente, el usuario toca Drive para conectar
+          },
+          error_callback: () => {}
+        }).requestAccessToken({prompt: 'none'});
       } catch(e) {}
-    }, 2000);
+    }, 2500);
   }
 });
 
