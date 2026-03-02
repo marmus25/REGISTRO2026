@@ -980,8 +980,8 @@ async function loadFromDrive() {
     const data = await resp.json();
     if (data.courses) {
       appData = data;
-      saveData();
-      location.reload();
+      autoSave();
+      startApp();
     }
   } catch(e) {
     showToast('Error cargando Drive: ' + e.message, 'err');
