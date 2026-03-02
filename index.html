@@ -2910,6 +2910,8 @@ function buildAttSheet(wb, c, trim) {
   if (!wb.Sheets[sheetName]) return;
   
   const ws = wb.Sheets[sheetName];
+  // Quitar protección de hoja
+  if (ws['!protect']) delete ws['!protect'];
   const dates = Object.keys(c.attendance[trim])
     .filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
   
@@ -2957,6 +2959,8 @@ function buildCalSheet(wb, c, trim) {
   if (!wb.Sheets[sheetName]) return;
   
   const ws = wb.Sheets[sheetName];
+  // Quitar protección de hoja
+  if (ws['!protect']) delete ws['!protect'];
   const serActs = c.activities[trim].ser;
   const sabActs = c.activities[trim].saber;
   const hacActs = c.activities[trim].hacer;
