@@ -447,9 +447,19 @@ input[type=number]{-moz-appearance:textfield}
   <div class="header-right">
     <span id="net-status" title="Estado de conexión" style="font-size:13px;cursor:default">🟢</span>
     <span class="save-pill" id="save-ind">● Sin cambios</span>
+    <button id="btn-drive-upload" onclick="syncToDrive()" title="Subir datos a Drive"
+      style="display:none;padding:5px 12px;border-radius:8px;border:1px solid #16a34a;
+      background:#dcfce7;font-size:12px;font-weight:600;cursor:pointer;color:#15803d;transition:all .2s">
+      ⬆️ Subir
+    </button>
+    <button id="btn-drive-restore" onclick="confirmRestoreFromDrive()" title="Restaurar datos desde Drive"
+      style="display:none;padding:5px 12px;border-radius:8px;border:1px solid #2563eb;
+      background:#dbeafe;font-size:12px;font-weight:600;cursor:pointer;color:#1d4ed8;transition:all .2s">
+      ⬇️ Restaurar
+    </button>
     <div style="display:inline-flex;flex-direction:column;align-items:center">
       <button id="drive-btn" onclick="handleDriveBtn()"
-        title="Sincronizar con Google Drive"
+        title="Google Drive"
         style="padding:5px 12px;border-radius:8px;border:1px solid #ced4da;
         background:#f8f9fa;font-size:12px;font-weight:600;cursor:pointer;
         color:#374151;transition:all .2s">☁️ Drive</button>
@@ -480,6 +490,15 @@ input[type=number]{-moz-appearance:textfield}
     </button>
     <input type="file" id="fi-json" accept=".json" onchange="loadJSON(this)" style="display:none">
     <div id="restore-area"></div>
+    <div id="drive-landing-area" style="display:none;margin-top:12px">
+      <button class="btn btn-green" style="width:100%;justify-content:center;padding:12px;font-size:14px"
+        onclick="landingLoadFromDrive()">
+        ☁️ Cargar datos desde Google Drive
+      </button>
+      <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px">
+        Sincroniza los datos guardados desde otro dispositivo
+      </p>
+    </div>
   </div>
 </div>
 
@@ -828,19 +847,33 @@ function updateDriveUI(connected) {
   const btn = document.getElementById('drive-btn');
   const status = document.getElementById('drive-status');
   if (!btn) return;
+  const btnUp = document.getElementById('btn-drive-upload');
+  const btnRest = document.getElementById('btn-drive-restore');
   if (connected) {
     btn.innerHTML = '☁️ Drive ✓';
     btn.style.background = '#16a34a';
     btn.style.borderColor = '#15803d';
+    btn.style.color = 'white';
     if (status) {
       status.textContent = lastSyncTime ? '⟳ ' + lastSyncTime : '⟳ Sincronizado';
       status.style.color = '#16a34a';
+    }
+    if (btnUp) btnUp.style.display = 'inline-block';
+    if (btnRest) btnRest.style.display = 'inline-block';
+    // Mostrar botón en landing si aún está visible
+    const landingArea = document.getElementById('drive-landing-area');
+    const landingScreen = document.getElementById('screen-landing');
+    if (landingArea && landingScreen && landingScreen.style.display !== 'none') {
+      landingArea.style.display = 'block';
     }
   } else {
     btn.innerHTML = '☁️ Drive';
     btn.style.background = '';
     btn.style.borderColor = '';
+    btn.style.color = '';
     if (status) { status.textContent = ''; }
+    if (btnUp) btnUp.style.display = 'none';
+    if (btnRest) btnRest.style.display = 'none';
   }
 }
 
@@ -977,6 +1010,32 @@ window.addEventListener('offline', () => {
 });
 
 // ── Botón Drive ──
+function confirmRestoreFromDrive() {
+  if (confirm('¿Restaurar datos desde Google Drive? Se reemplazarán los datos actuales.')) {
+    loadFromDrive();
+  }
+}
+
+function landingLoadFromDrive() {
+  if (!driveToken) {
+    // Conectar primero y luego cargar
+    google.accounts.oauth2.initTokenClient({
+      client_id: DRIVE_CLIENT_ID,
+      scope: DRIVE_SCOPE,
+      callback: async (resp) => {
+        if (!resp.error && resp.access_token) {
+          driveToken = resp.access_token;
+          updateDriveUI(true);
+          startAutoSync();
+          await loadFromDrive();
+        }
+      }
+    }).requestAccessToken();
+  } else {
+    loadFromDrive();
+  }
+}
+
 function handleDriveBtn() {
   if (driveToken) { configurarDrive(); } else { initDriveAuth(); }
 }
@@ -1025,6 +1084,12 @@ window.addEventListener('load', () => {
               driveToken = resp.access_token;
               updateDriveUI(true);
               startAutoSync();
+              // Mostrar botón Drive en landing si aún no hay datos cargados
+              const landingArea = document.getElementById('drive-landing-area');
+              const landingScreen = document.getElementById('screen-landing');
+              if (landingArea && landingScreen && landingScreen.style.display !== 'none') {
+                landingArea.style.display = 'block';
+              }
             }
             // Si falla silenciosamente, el usuario toca Drive para conectar
           },
