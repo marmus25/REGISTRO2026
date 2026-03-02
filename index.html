@@ -539,6 +539,7 @@ input[type=number]{-moz-appearance:textfield}
       <div class="sidebar-bottom">
         <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center" onclick="document.getElementById('fi-xlsx-add').click()">+ Agregar curso</button>
         <input type="file" id="fi-xlsx-add" accept=".xlsx" multiple onchange="addCourses(this)" style="display:none">
+        <button class="btn btn-blue btn-sm" style="width:100%;justify-content:center;margin-top:6px" onclick="abrirVolcadoModal()">📤 Volcar a Excel</button>
       </div>
     </aside>
     <main class="main" id="main"></main>
@@ -2830,6 +2831,180 @@ function getCellVal(ws,row,col){
 }
 function escH(str){
   return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+// ════════════════════════════════════════════════
+// VOLCADO A EXCEL (.xlsx)
+// ════════════════════════════════════════════════
+function abrirVolcadoModal() {
+  const c = getCourse(); if (!c) return;
+  openModal(`
+    <div class="modal-title">📤 Volcar datos a Excel</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+      Genera un archivo Excel con el formato oficial del colegio para el curso actual: <strong>${escH(c.meta.curso)}</strong></p>
+    <div style="display:grid;gap:8px">
+      <label style="font-size:12px;font-weight:700">Seleccionar trimestre a volcar:</label>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="volcadoTrim(1)">1er Trimestre</button>
+        <button class="btn btn-outline btn-sm" onclick="volcadoTrim(2)">2do Trimestre</button>
+        <button class="btn btn-outline btn-sm" onclick="volcadoTrim(3)">3er Trimestre</button>
+      </div>
+      <button class="btn btn-blue" style="margin-top:4px" onclick="volcadoTrim('todos')">📤 Volcar los 3 trimestres</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    </div>`);
+}
+
+function volcadoTrim(selTrim) {
+  closeModal();
+  const c = getCourse(); if (!c) return;
+  
+  // Necesita el xlsx original para preservar fórmulas y formato
+  if (!appData._xlsxBase64 || !appData._xlsxBase64[c.meta.courseId]) {
+    showToast('⚠️ Cargá primero el .xlsx original del curso para volcar','err');
+    // Abrir selector de archivo
+    const fi = document.createElement('input');
+    fi.type = 'file'; fi.accept = '.xlsx';
+    fi.onchange = (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      const r = new FileReader();
+      r.onload = (ev) => {
+        if (!appData._xlsxBase64) appData._xlsxBase64 = {};
+        appData._xlsxBase64[c.meta.courseId] = ev.target.result;
+        showToast('✅ Plantilla cargada. Ahora presioná Volcar nuevamente','ok');
+      };
+      r.readAsDataURL(file);
+    };
+    fi.click();
+    return;
+  }
+  
+  if (typeof XLSX === 'undefined') { showToast('Error: librería XLSX no cargada','err'); return; }
+  
+  const trims = selTrim === 'todos' ? [1,2,3] : [parseInt(selTrim)];
+  
+  // Cargar workbook desde base64
+  const b64 = appData._xlsxBase64[c.meta.courseId].split(',')[1];
+  const wb = XLSX.read(b64, {type:'base64'});
+  
+  trims.forEach(trim => {
+    buildAttSheet(wb, c, trim);
+    buildCalSheet(wb, c, trim);
+  });
+  
+  const trimLabel = selTrim === 'todos' ? 'Todos' : TRIM_LABELS[selTrim]+'Trim';
+  const fname = `${c.meta.curso}_VOLCADO_${trimLabel}.xlsx`.replace(/\s+/g,'_');
+  XLSX.writeFile(wb, fname);
+  showToast('✅ Excel volcado: ' + fname, 'ok');
+}
+
+function buildAttSheet(wb, c, trim) {
+  // Modificar hoja existente preservando fórmulas y formato
+  // Fila 7: fechas en columnas desde col D (índice 3)
+  // Filas 9+: asistencia P/F/L/R en las mismas columnas
+  
+  const trimNames = {1:'1Trim', 2:'2Trim', 3:'3Trim'};
+  const sheetName = 'Asistencia ' + trimNames[trim];
+  if (!wb.Sheets[sheetName]) return;
+  
+  const ws = wb.Sheets[sheetName];
+  const dates = Object.keys(c.attendance[trim])
+    .filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+  
+  // Fila 7 (r:6): limpiar y escribir fechas desde col D (c:3)
+  for (let col = 3; col < 100; col++) {
+    const addr = XLSX.utils.encode_cell({r:6, c:col});
+    if (ws[addr]) delete ws[addr];
+  }
+  dates.forEach((date, i) => {
+    const parts = date.split('-');
+    const fechaStr = parts[2] + '/' + parts[1]; // dd/mm
+    const addr = XLSX.utils.encode_cell({r:6, c:7+i}); // col 8 en adelante
+    ws[addr] = {t:'s', v:fechaStr};
+  });
+  
+  // Filas 9+ (r:8+): escribir asistencia por estudiante
+  c.students.forEach((st, i) => {
+    const r = 8 + i;
+    for (let col = 7; col < 100; col++) {
+      const addr = XLSX.utils.encode_cell({r, c:col});
+      if (ws[addr]) delete ws[addr];
+    }
+    dates.forEach((date, j) => {
+      const val = (c.attendance[trim][date] || {})[i] || ' ';
+      const addr = XLSX.utils.encode_cell({r, c:7+j}); // col 8 en adelante
+      ws[addr] = {t:'s', v:val};
+    });
+  });
+  
+  // Actualizar rango
+  const lastCol = Math.max(3 + dates.length, 30);
+  const lastRow = 8 + c.students.length;
+  ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:lastRow, c:lastCol}});
+}
+
+function buildCalSheet(wb, c, trim) {
+  // Modificar hoja existente preservando fórmulas de promedios
+  // Estructura: col D-F=SER(3), G=PromSER, H-O=SABER(8), P=PromSABER,
+  //             Q-X=HACER(8), Y=PromHACER, Z=Auto, AA=Total
+  // En índices 0-based: D=3, F=5, G=6, H=7, O=14, P=15, Q=16, X=23, Y=24, Z=25, AA=26
+  
+  const trimSheets = {1:'Calf. 1er Trim', 2:'Calf. 2do Trim', 3:'Calf. 3er Trim'};
+  const sheetName = trimSheets[trim];
+  if (!wb.Sheets[sheetName]) return;
+  
+  const ws = wb.Sheets[sheetName];
+  const serActs = c.activities[trim].ser;
+  const sabActs = c.activities[trim].saber;
+  const hacActs = c.activities[trim].hacer;
+  
+  // Fila 8 (r:7): nombres de actividades verticales
+  // SER: cols D-F (3-5)
+  serActs.forEach((name, i) => {
+    const addr = XLSX.utils.encode_cell({r:7, c:3+i});
+    ws[addr] = {t:'s', v:name};
+  });
+  // SABER: cols H-O (7-14)
+  sabActs.forEach((name, i) => {
+    const addr = XLSX.utils.encode_cell({r:7, c:7+i});
+    ws[addr] = {t:'s', v:name};
+  });
+  // HACER: cols Q-X (16-23)
+  hacActs.forEach((name, i) => {
+    const addr = XLSX.utils.encode_cell({r:7, c:16+i});
+    ws[addr] = {t:'s', v:name};
+  });
+  
+  // Filas 9+: notas (r:8+)
+  c.students.forEach((st, i) => {
+    const r = 8 + i;
+    const g = (c.grades[trim] || {})[i] || {ser:[], saber:[], hacer:[], auto:null};
+    
+    // SER: cols D-F (c:3-5)
+    for (let j = 0; j < 3; j++) {
+      const v = g.ser[j];
+      const addr = XLSX.utils.encode_cell({r, c:3+j});
+      ws[addr] = v !== null && v !== undefined ? {t:'n', v:v} : {t:'s', v:' '};
+    }
+    // SABER: cols H-O (c:7-14)
+    for (let j = 0; j < 8; j++) {
+      const v = g.saber[j];
+      const addr = XLSX.utils.encode_cell({r, c:7+j});
+      ws[addr] = v !== null && v !== undefined ? {t:'n', v:v} : {t:'s', v:' '};
+    }
+    // HACER: cols Q-X (c:16-23)
+    for (let j = 0; j < 8; j++) {
+      const v = g.hacer[j];
+      const addr = XLSX.utils.encode_cell({r, c:16+j});
+      ws[addr] = v !== null && v !== undefined ? {t:'n', v:v} : {t:'s', v:' '};
+    }
+    // AUTOEVALUACIÓN: col Z (c:25)
+    const auto = g.auto;
+    const addrAuto = XLSX.utils.encode_cell({r, c:25});
+    ws[addrAuto] = auto !== null && auto !== undefined ? {t:'n', v:auto} : {t:'s', v:' '};
+  });
 }
 
 // ════════════════════════════════════════════════
