@@ -978,25 +978,17 @@ window.addEventListener('offline', () => {
 
 // ── Configurar Client ID ──
 function configurarDrive() {
-  const actual = localStorage.getItem('rmDriveClientId') || '';
   openModal(`
-    <div class="modal-title">☁️ Configurar Google Drive</div>
+    <div class="modal-title">☁️ Google Drive</div>
     <p style="font-size:12px;color:var(--muted);margin-bottom:12px">
-      Pegá tu <b>Client ID</b> de Google Cloud Console para activar la sincronización automática.</p>
-    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px;margin-bottom:12px;font-size:11px;color:#0369a1">
-      <b>¿Cómo obtenerlo?</b><br>
-      1. console.cloud.google.com<br>
-      2. Nuevo proyecto → APIs → Drive API → Habilitar<br>
-      3. Credenciales → OAuth → App web → Copiar Client ID
+      Client ID configurado. Tocá <b>Conectar</b> para sincronizar con tu cuenta de Google.</p>
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px;margin-bottom:12px;font-size:10px;color:#0369a1;font-family:monospace;word-break:break-all">
+      ${DRIVE_CLIENT_ID}
     </div>
-    <input id="drive-client-id-inp" type="text" placeholder="123456789-abc.apps.googleusercontent.com"
-      value="${escH(actual)}"
-      style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;
-      font-size:12px;font-family:monospace;margin-bottom:8px">
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
-      ${actual ? '<button class="btn btn-outline" onclick="desconectarDrive()">Desconectar</button>' : ''}
-      <button class="btn btn-blue" onclick="guardarClientId()">Guardar y conectar</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cerrar</button>
+      <button class="btn btn-outline" onclick="desconectarDrive()">Desconectar</button>
+      <button class="btn btn-blue" onclick="closeModal();initDriveAuth()">Conectar</button>
     </div>`);
 }
 
@@ -1019,15 +1011,14 @@ function desconectarDrive() {
   showToast('Drive desconectado', 'ok');
 }
 
-// Inicializar al cargar si ya hay client ID
+// Inicializar al cargar si hay client ID
 window.addEventListener('load', () => {
-  const savedClientId = localStorage.getItem('rmDriveClientId');
-  if (savedClientId && navigator.onLine) {
+  if (DRIVE_CLIENT_ID && navigator.onLine) {
     // Auto-reconectar silenciosamente
     setTimeout(() => {
       try {
         const client = google.accounts.oauth2.initTokenClient({
-          client_id: savedClientId,
+          client_id: DRIVE_CLIENT_ID,
           scope: DRIVE_SCOPE,
           prompt: '',
           callback: (resp) => {
@@ -2752,4 +2743,3 @@ document.addEventListener('DOMContentLoaded', updateNetStatus);
 </script>
 </body>
 </html>
-
