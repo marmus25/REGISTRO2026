@@ -947,13 +947,16 @@ async function syncToDrive() {
     const now = new Date();
     lastSyncTime = now.toLocaleTimeString('es-BO', {hour:'2-digit', minute:'2-digit'});
     updateDriveUI(true);
-    console.log('Drive sync OK:', lastSyncTime);
+    hasChanges = false;
+    showToast('✅ Datos subidos a Drive correctamente', 'ok');
   } catch(e) {
     console.error('Drive sync error:', e);
     if (e.message && e.message.includes('401')) {
       driveToken = null;
       showToast('Sesión Drive expirada — reconectando...', 'err');
       setTimeout(initDriveAuth, 1500);
+    } else {
+      showToast('Error al subir a Drive: ' + e.message, 'err');
     }
   }
 }
@@ -993,7 +996,7 @@ async function loadFromDrive() {
 function startAutoSync() {
   if (syncInterval) clearInterval(syncInterval);
   syncInterval = setInterval(() => {
-    if (navigator.onLine && driveToken && hasChanges()) {
+    if (navigator.onLine && driveToken && hasChanges) {
       syncToDrive();
     }
   }, 3 * 60 * 1000);
