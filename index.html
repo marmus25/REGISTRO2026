@@ -2920,21 +2920,22 @@ function buildAttSheet(wb, c, trim) {
   }
   dates.forEach((date, i) => {
     const parts = date.split('-');
-    const fechaStr = parts[2] + '/' + parts[1]; // dd/mm
-    const addr = XLSX.utils.encode_cell({r:6, c:7+i}); // col 8 en adelante
-    ws[addr] = {t:'s', v:fechaStr};
+    const jsDate = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+    const excelDate = Math.floor((jsDate - new Date(1899,11,30)) / 86400000);
+    const addr = XLSX.utils.encode_cell({r:6, c:3+i});
+    ws[addr] = {t:'n', v:excelDate, z:'DD/MM/YYYY'};
   });
   
   // Filas 9+ (r:8+): escribir asistencia por estudiante
   c.students.forEach((st, i) => {
     const r = 8 + i;
-    for (let col = 7; col < 100; col++) {
+    for (let col = 3; col < 100; col++) {
       const addr = XLSX.utils.encode_cell({r, c:col});
       if (ws[addr]) delete ws[addr];
     }
     dates.forEach((date, j) => {
       const val = (c.attendance[trim][date] || {})[i] || ' ';
-      const addr = XLSX.utils.encode_cell({r, c:7+j}); // col 8 en adelante
+      const addr = XLSX.utils.encode_cell({r, c:3+j}); // col D en adelante
       ws[addr] = {t:'s', v:val};
     });
   });
