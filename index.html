@@ -4,37 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Registro Pedagógico — Educación Musical 2026</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3b82f6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Registro Musical">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(r => console.log('SW registrado:', r.scope))
+        .catch(e => console.warn('SW error:', e));
+    });
+  }
+</script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap');
-
 :root{
-  /* ── Canvas LMS Color Palette ── */
-  --canvas-blue:#0770a3;
-  --canvas-blue-hover:#005a87;
-  --canvas-blue-light:#e8f3f9;
-  --canvas-sidebar:#2d3b45;
-  --canvas-sidebar-hover:#394b56;
-  --canvas-sidebar-active:#1f2d35;
-  --canvas-sidebar-text:#c7cdd1;
-  --canvas-sidebar-icon:#8b9ba8;
-
-  --bg:#f5f5f5;--white:#ffffff;--s1:#f8f9fa;--s2:#eef0f2;--s3:#dee2e6;
-  --border:#c7cdd1;--text:#2d3b45;--muted:#6b7780;--dark:#2d3b45;
-  --blue:#0770a3;--blue-l:#e8f3f9;--blue-d:#005a87;
-  --green:#0b874b;--green-l:#e8f5ee;--green-d:#076b3c;
-  --yellow:#c7541c;--yellow-l:#fdf3ec;
-  --red:#e62429;--red-l:#fde8e8;
-  --purple:#8b44ac;--purple-l:#f3ebf7;
-  --orange:#e66000;--orange-l:#fdf0e6;
-  --ser-c:#5b9bd5;--ser-bg:#e8f3f9;
-  --saber-c:#a06ac4;--saber-bg:#f3ebf7;
-  --hacer-c:#0b874b;--hacer-bg:#e8f5ee;
-  --auto-c:#e66000;--auto-bg:#fdf0e6;
-  --radius:4px;
-  --shadow:0 1px 3px rgba(45,59,69,.12),0 0 0 1px rgba(45,59,69,.06);
-  --shadow-md:0 2px 8px rgba(45,59,69,.12),0 0 0 1px rgba(45,59,69,.06);
-  --shadow-lg:0 8px 24px rgba(45,59,69,.14),0 0 0 1px rgba(45,59,69,.06);
-  --font:'Source Sans 3','LatoExtended','Segoe UI',system-ui,sans-serif;
+  --bg:#f5f5f5;--white:#ffffff;--s1:#f8f9fa;--s2:#e9ecef;--s3:#dee2e6;
+  --border:#ced4da;--text:#212529;--muted:#6c757d;--dark:#343a40;
+  --blue:#3b82f6;--blue-l:#1e3a5f;--blue-d:#2563eb;
+  --green:#22c55e;--green-l:#14532d;--green-d:#16a34a;
+  --yellow:#f59e0b;--yellow-l:#451a03;
+  --red:#ef4444;--red-l:#450a0a;
+  --purple:#a855f7;--purple-l:#3b0764;
+  --orange:#f97316;--orange-l:#431407;
+  --ser-c:#60a5fa;--ser-bg:#1e3a5f;
+  --saber-c:#c084fc;--saber-bg:#3b0764;
+  --hacer-c:#4ade80;--hacer-bg:#14532d;
+  --auto-c:#fb923c;--auto-bg:#431407;
+  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 15px rgba(0,0,0,.1),0 4px 6px rgba(0,0,0,.05);
+  --font:'Segoe UI',system-ui,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh}
@@ -42,60 +44,56 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 ::-webkit-scrollbar-track{background:#f1f1f1}
 ::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
 
-/* ─── HEADER (Canvas LMS style) ─── */
-header{background:var(--canvas-sidebar);border-bottom:none;
-  padding:0 16px;height:56px;display:flex;align-items:center;
+/* ─── HEADER ─── */
+header{background:#ffffff;border-bottom:1px solid var(--border);
+  padding:0 20px;height:56px;display:flex;align-items:center;
   justify-content:space-between;position:sticky;top:0;z-index:300;
-  box-shadow:0 1px 0 rgba(0,0,0,.3)}
+  box-shadow:var(--shadow)}
 .logo{display:flex;align-items:center;gap:10px}
-.logo-icon{width:34px;height:34px;background:#0770a3;
-  border-radius:6px;display:flex;align-items:center;justify-content:center;
-  font-size:17px;color:white;flex-shrink:0}
-.logo-text{font-size:14px;font-weight:700;color:#ffffff;letter-spacing:.1px}
-.logo-sub{font-size:11px;color:var(--canvas-sidebar-icon);font-weight:400}
-.header-right{display:flex;align-items:center;gap:6px}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--blue),var(--purple));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:16px;color:white}
+.logo-text{font-size:15px;font-weight:700;color:#212529}
+.logo-sub{font-size:11px;color:#6c757d;font-weight:400}
+.header-right{display:flex;align-items:center;gap:8px}
 .save-pill{display:flex;align-items:center;gap:5px;padding:4px 10px;
-  border-radius:20px;font-size:11px;font-weight:600;
-  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6)}
-.save-pill.saved{background:rgba(11,135,75,.25);border-color:rgba(11,135,75,.5);color:#4cd98a}
-.save-pill.saving{background:rgba(230,96,0,.2);border-color:rgba(230,96,0,.4);color:#f59553}
+  border-radius:20px;font-size:11px;font-weight:600;background:#f8f9fa;
+  border:1px solid #ced4da;color:#6c757d}
+.save-pill.saved{background:#dcfce7;border-color:#16a34a;color:#16a34a}
+.save-pill.saving{background:#fef9c3;border-color:#ca8a04;color:#ca8a04}
 
-/* ─── BOTONES (Canvas style) ─── */
+/* ─── BOTONES ─── */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
-  border-radius:var(--radius);border:1px solid transparent;font-family:var(--font);font-size:13px;
-  font-weight:600;cursor:pointer;transition:all .12s;white-space:nowrap;letter-spacing:.1px}
-.btn-blue{background:var(--canvas-blue);color:white;border-color:var(--canvas-blue-hover)}
-.btn-blue:hover{background:var(--canvas-blue-hover);border-color:#004a73}
-.btn-green{background:var(--green);color:white;border-color:var(--green-d)}
-.btn-green:hover{background:var(--green-d)}
-.btn-outline{background:#fff;color:var(--text);border:1px solid var(--border)}
-.btn-outline:hover{background:var(--s1);border-color:var(--muted)}
-.btn-ghost{background:transparent;color:rgba(255,255,255,.7);padding:6px 10px;border:1px solid rgba(255,255,255,.2)}
-.btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff}
-.btn-red{background:var(--red);color:white;border-color:#c41f24}
+  border-radius:var(--radius);border:none;font-family:var(--font);font-size:13px;
+  font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-blue{background:var(--blue);color:white}.btn-blue:hover{background:var(--blue-d)}
+.btn-green{background:var(--green);color:white}.btn-green:hover{background:var(--green-d)}
+.btn-outline{background:#fff;color:#374151;border:1px solid #ced4da}
+.btn-outline:hover{background:#f3f4f6;border-color:#6b7280;color:#111}
+.btn-ghost{background:transparent;color:#6c757d;padding:6px 10px;border:1px solid transparent}
+.btn-ghost:hover{background:#f3f4f6;color:#374151}
+.btn-red{background:var(--red);color:white}
 .btn-sm{padding:5px 12px;font-size:12px}
 .btn-xs{padding:3px 8px;font-size:11px}
 
 /* ─── LANDING ─── */
 #screen-landing{display:flex;flex-direction:column;align-items:center;
-  justify-content:center;min-height:calc(100vh - 56px);padding:40px 20px;text-align:center;
-  background:var(--bg)}
-.landing-card{background:#ffffff;border-radius:6px;padding:40px;
-  box-shadow:var(--shadow-lg);max-width:500px;width:100%;margin-bottom:20px;
-  border:1px solid var(--border)}
-.landing-icon{font-size:40px;margin-bottom:16px}
-.landing-title{font-size:22px;font-weight:700;color:var(--dark);margin-bottom:6px}
+  justify-content:center;min-height:calc(100vh - 56px);padding:40px 20px;text-align:center}
+.landing-card{background:#ffffff;border-radius:16px;padding:40px;
+  box-shadow:var(--shadow-lg);max-width:520px;width:100%;margin-bottom:20px}
+.landing-icon{font-size:48px;margin-bottom:16px}
+.landing-title{font-size:24px;font-weight:800;color:var(--dark);margin-bottom:6px}
 .landing-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
-.upload-area{border:2px dashed var(--border);border-radius:4px;padding:32px 20px;
+.upload-area{border:2px dashed #ced4da;border-radius:12px;padding:32px 20px;
   cursor:pointer;transition:all .2s;margin-bottom:16px;background:#f8f9fa}
-.upload-area:hover,.upload-area.over{border-color:var(--canvas-blue);background:var(--canvas-blue-light)}
-.upload-area h3{font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text)}
+.upload-area:hover,.upload-area.over{border-color:var(--blue);background:var(--blue-l)}
+.upload-area h3{font-size:14px;font-weight:600;margin-bottom:4px}
 .upload-area p{font-size:12px;color:var(--muted)}
 .divider{display:flex;align-items:center;gap:12px;color:var(--muted);
   font-size:12px;margin:16px 0}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
-.restore-banner{background:#e8f5ee;border:1px solid #0b874b;
-  border-radius:4px;padding:14px 16px;text-align:left;margin-top:12px}
+.restore-banner{background:var(--green-l);border:1px solid var(--green);
+  border-radius:10px;padding:14px 16px;text-align:left;margin-top:12px}
 .restore-banner h4{color:var(--green-d);font-size:13px;margin-bottom:4px}
 .restore-banner p{font-size:11px;color:var(--green-d)}
 
@@ -103,179 +101,170 @@ header{background:var(--canvas-sidebar);border-bottom:none;
 #screen-app{display:none}
 .app-layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 56px)}
 
-/* ─── SIDEBAR (Canvas dark sidebar) ─── */
-.sidebar{background:var(--canvas-sidebar);border-right:none;
+/* ─── SIDEBAR ─── */
+.sidebar{background:#ffffff;border-right:1px solid var(--border);
   position:sticky;top:56px;height:calc(100vh - 56px);
   overflow-y:auto;display:flex;flex-direction:column}
-.sidebar-course{padding:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-course{padding:12px;border-bottom:1px solid var(--border)}
 .course-label{font-size:10px;font-weight:700;text-transform:uppercase;
-  letter-spacing:.8px;color:var(--canvas-sidebar-icon);margin-bottom:6px}
-.course-select{width:100%;padding:8px 10px;border:1px solid rgba(255,255,255,.15);
+  letter-spacing:.8px;color:var(--muted);margin-bottom:6px}
+.course-select{width:100%;padding:8px 10px;border:1px solid #dee2e6;
   border-radius:var(--radius);font-family:var(--font);font-size:13px;
-  font-weight:600;color:#ffffff;background:rgba(255,255,255,.08);cursor:pointer}
-.course-select:focus{outline:none;border-color:var(--canvas-blue)}
+  font-weight:600;color:#212529;background:#f8f9fa;cursor:pointer}
+.course-select:focus{outline:none;border-color:var(--blue)}
 .sidebar-nav{padding:8px;flex:1}
 .nav-section{font-size:10px;font-weight:700;text-transform:uppercase;
-  letter-spacing:.8px;color:rgba(255,255,255,.3);padding:12px 8px 4px}
+  letter-spacing:.8px;color:#adb5bd;padding:12px 8px 4px}
 .nav-btn{display:flex;align-items:center;gap:8px;width:100%;
   padding:8px 10px;border-radius:var(--radius);border:none;
-  background:transparent;color:var(--canvas-sidebar-text);font-family:var(--font);
-  font-size:13px;cursor:pointer;transition:all .1s;text-align:left;font-weight:500}
-.nav-btn:hover{background:rgba(255,255,255,.07);color:#ffffff}
-.nav-btn.active{background:var(--canvas-blue);color:#ffffff;font-weight:600}
-.nav-btn .ni{font-size:14px;width:20px;text-align:center;opacity:.85}
-.sidebar-bottom{padding:10px;border-top:1px solid rgba(255,255,255,.08)}
+  background:transparent;color:#6c757d;font-family:var(--font);
+  font-size:13px;cursor:pointer;transition:all .12s;text-align:left;font-weight:500}
+.nav-btn:hover{background:#f3f4f6;color:#212529}
+.nav-btn.active{background:#dbeafe;color:#1d4ed8;font-weight:700;border-left:3px solid #2563eb}
+.nav-btn .ni{font-size:14px;width:20px;text-align:center}
+.sidebar-bottom{padding:10px;border-top:1px solid var(--border)}
 
 /* ─── MAIN ─── */
 .main{padding:20px 24px;overflow-x:auto;background:var(--bg)}
 .page-header{display:flex;align-items:flex-start;justify-content:space-between;
   margin-bottom:20px;flex-wrap:wrap;gap:12px}
-.page-title{font-size:20px;font-weight:700;color:var(--dark);letter-spacing:-.2px}
+.page-title{font-size:18px;font-weight:800;color:var(--dark)}
 .page-sub{font-size:12px;color:var(--muted);margin-top:2px}
 .page-actions{display:flex;gap:8px;flex-wrap:wrap}
 
 /* ─── CARDS ─── */
-.card{background:#fff;border:1px solid var(--border);border-radius:4px;
+.card{background:#fff;border:1px solid #dee2e6;border-radius:12px;
   padding:16px;box-shadow:var(--shadow)}
 .card-title{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:12px;
   display:flex;align-items:center;gap:6px}
 
 /* ─── STATS GRID ─── */
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}
-.stat-card{background:#fff;border:1px solid var(--border);border-radius:4px;
+.stat-card{background:#fff;border:1px solid #dee2e6;border-radius:10px;
   padding:14px 16px;box-shadow:var(--shadow)}
-.stat-val{font-size:28px;font-weight:700;line-height:1;margin-bottom:4px;color:var(--canvas-blue)}
+.stat-val{font-size:28px;font-weight:800;line-height:1;margin-bottom:4px}
 .stat-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 .stat-sub{font-size:11px;color:var(--muted);margin-top:2px}
 
-/* ─── TABS (Canvas pill tabs) ─── */
-.tabs{display:flex;gap:0;background:#ffffff;border:1px solid var(--border);
-  border-radius:var(--radius);padding:0;width:fit-content;margin-bottom:16px;overflow:hidden}
-.tab{padding:7px 16px;border-radius:0;border:none;border-right:1px solid var(--border);
-  background:transparent;color:var(--muted);font-family:var(--font);font-size:12px;font-weight:600;
-  cursor:pointer;transition:all .1s}
-.tab:last-child{border-right:none}
-.tab.active{background:var(--canvas-blue);color:#fff}
-.tab:hover:not(.active){background:var(--canvas-blue-light);color:var(--canvas-blue)}
+/* ─── TABS ─── */
+.tabs{display:flex;gap:0;background:#f8f9fa;border:1px solid #dee2e6;
+  border-radius:var(--radius);padding:3px;width:fit-content;margin-bottom:16px}
+.tab{padding:6px 14px;border-radius:6px;border:none;background:transparent;
+  color:#6c757d;font-family:var(--font);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .12s}
+.tab.active{background:#2563eb;color:#fff;border:1px solid #1d4ed8}
+.tab:hover:not(.active){background:#e9ecef;color:#212529}
 
-/* ─── GRADEBOOK TABLE (Canvas Gradebook) ─── */
-.gb-wrap{overflow-x:auto;border-radius:4px;border:1px solid var(--border);
+/* ─── GRADEBOOK TABLE ─── */
+.gb-wrap{overflow-x:auto;border-radius:10px;border:1px solid #dee2e6;
   box-shadow:var(--shadow);background:#fff}
 .gb-table{border-collapse:collapse;font-size:12px;width:100%}
 .gb-table thead{position:sticky;top:0;z-index:10}
-.gb-table .row-dim{background:#f5f5f5}
-.gb-table .row-names th{background:#2d3b45;color:#ffffff;padding:8px 10px;
+.gb-table .row-dim{background:var(--s1)}
+.gb-table .row-names th{background:var(--dark);color:white;padding:8px 10px;
   font-size:11px;font-weight:700;white-space:nowrap;text-align:center}
-.gb-table .row-avg td{background:#f0f2f4;font-weight:700;font-size:11px;
+.gb-table .row-avg td{background:#f1f5f9;font-weight:700;font-size:11px;
   padding:5px 8px;text-align:center;border-bottom:2px solid var(--border)}
 /* dim headers */
-.th-ser{background:#0a5fa3!important;color:#c0ddf5!important;font-size:11px!important}
-.th-saber{background:#6b2f96!important;color:#dfc8f5!important;font-size:11px!important}
-.th-hacer{background:#076b3c!important;color:#a0e8c5!important;font-size:11px!important}
-.th-auto{background:#a04a00!important;color:#ffd5b5!important;font-size:11px!important}
-.th-prom{background:#1a2933!important;color:#e8eef2!important;font-size:11px!important}
+.th-ser{background:#1e3a8a!important;color:#93c5fd!important;font-size:11px!important}
+.th-saber{background:#4c1d95!important;color:#d8b4fe!important;font-size:11px!important}
+.th-hacer{background:#14532d!important;color:#86efac!important;font-size:11px!important}
+.th-auto{background:#431407!important;color:#fdba74!important;font-size:11px!important}
+.th-prom{background:#020617!important;color:#f8fafc!important;font-size:11px!important}
 .gb-table th,
-.gb-table td{border:1px solid #e0e4e8;padding:0}
+.gb-table td{border:1px solid #e5e7eb;padding:0}
 .gb-table thead th{padding:6px 8px;text-align:center;font-size:10px;font-weight:700;white-space:nowrap}
-.gb-table tbody tr:hover td{background:#e8f3f9}
-.gb-table tbody tr:nth-child(even) td{background:#fafbfc}
-.gb-table tbody tr:nth-child(even):hover td{background:#e8f3f9}
+.gb-table tbody tr:hover td{background:#eff6ff}
+.gb-table tbody tr:nth-child(even) td{background:#fafafa}
+.gb-table tbody tr:nth-child(even):hover td{background:#eff6ff}
 .td-nro{width:32px;text-align:center;color:var(--muted);font-size:11px;padding:6px 4px!important}
 .td-name{min-width:170px;padding:6px 10px!important;font-weight:600;font-size:12px}
 .td-score{text-align:center;padding:3px!important;width:52px}
-/* Canvas-style score inputs */
 .score-inp{width:44px;border:none;background:transparent;text-align:center;
   font-family:var(--font);font-size:13px;font-weight:700;padding:4px 2px;
-  border-radius:2px;color:var(--text);cursor:text}
-.score-inp:focus{outline:2px solid var(--canvas-blue);background:#fff;border-radius:2px;box-shadow:0 0 0 3px rgba(7,112,163,.15)}
-.score-inp:hover{background:var(--canvas-blue-light)}
+  border-radius:4px;color:#212529;cursor:text}
+.score-inp:focus{outline:2px solid #86efac;background:#4aad73;border-radius:4px}
+.score-inp:hover{background:#f1f5f9}
 .td-prom{text-align:center;padding:4px 6px!important;font-weight:700;font-size:12px;width:54px}
-.badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:11px;font-weight:700}
-.badge-g{background:#e8f5ee;color:#076b3c;border:1px solid rgba(11,135,75,.3)}
-.badge-m{background:#fdf6e3;color:#9a6700;border:1px solid rgba(194,133,0,.3)}
-.badge-r{background:#fde8e8;color:#b42b2e;border:1px solid rgba(230,36,41,.3)}
+.badge{display:inline-block;padding:2px 7px;border-radius:12px;font-size:11px;font-weight:700}
+.badge-g{background:#dcfce7;color:#16a34a;border:1px solid #22c55e}
+.badge-m{background:#fef9c3;color:#ca8a04;border:1px solid #f59e0b}
+.badge-r{background:#fee2e2;color:#dc2626;border:1px solid #ef4444}
 .badge-n{color:var(--muted);font-weight:400}
 .td-obs{min-width:180px;padding:4px 8px!important}
 .obs-inp{width:100%;border:none;background:transparent;font-family:var(--font);
-  font-size:11px;padding:3px 4px;resize:none;min-height:32px;color:var(--text)}
-.obs-inp:focus{outline:2px solid var(--canvas-blue);border-radius:2px;background:var(--canvas-blue-light)}
+  font-size:11px;padding:3px 4px;resize:none;min-height:32px;color:#212529}
+.obs-inp:focus{outline:2px solid var(--blue);border-radius:4px;background:var(--blue-l)}
 
 /* ─── ASISTENCIA ─── */
-.att-btn{width:30px;height:26px;border-radius:3px;border:1px solid var(--border);
+.att-btn{width:30px;height:26px;border-radius:4px;border:1px solid var(--border);
   background:white;font-size:10px;font-weight:700;cursor:pointer;transition:all .1s}
-.att-btn.aP{background:#e8f5ee;border-color:var(--green);color:var(--green)}
-.att-btn.aF{background:#fde8e8;border-color:var(--red);color:var(--red)}
-.att-btn.aL{background:#fdf6e3;border-color:#c79200;color:#9a6700}
-.att-btn.aR{background:var(--canvas-blue-light);border-color:var(--canvas-blue);color:var(--canvas-blue)}
-.chip{width:22px;height:22px;border-radius:3px;display:inline-flex;
+.att-btn.aP{background:var(--green-l);border-color:var(--green);color:var(--green)}
+.att-btn.aF{background:var(--red-l);border-color:var(--red);color:var(--red)}
+.att-btn.aL{background:var(--yellow-l);border-color:var(--yellow);color:var(--yellow)}
+.att-btn.aR{background:var(--blue-l);border-color:var(--blue);color:var(--blue)}
+.chip{width:22px;height:22px;border-radius:4px;display:inline-flex;
   align-items:center;justify-content:center;font-size:9px;font-weight:700}
-.cP{background:#e8f5ee;color:var(--green)}
-.cF{background:#fde8e8;color:var(--red)}
-.cL{background:#fdf6e3;color:#9a6700}
-.cR{background:var(--canvas-blue-light);color:var(--canvas-blue)}
+.cP{background:var(--green-l);color:var(--green)}
+.cF{background:var(--red-l);color:var(--red)}
+.cL{background:var(--yellow-l);color:var(--yellow)}
+.cR{background:var(--blue-l);color:var(--blue)}
 .c_{background:var(--s2);color:var(--muted)}
 
 /* ─── MAPA DE ASIENTOS ─── */
 .seat-map{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;padding:4px}
-.seat{border-radius:4px;border:1px solid var(--border);background:var(--s1);
-  cursor:pointer;transition:all .12s;padding:8px 6px;text-align:center;
+.seat{border-radius:10px;border:2px solid var(--border);background:var(--s1);
+  cursor:pointer;transition:all .15s;padding:8px 6px;text-align:center;
   display:flex;flex-direction:column;align-items:center;min-height:70px;
   user-select:none}
-.seat:hover{transform:scale(1.04);box-shadow:var(--shadow-md);border-color:var(--canvas-blue)}
-.seat:active{transform:scale(.97)}
-.seat.sP{background:#e8f5ee;border-color:var(--green)}
-.seat.sF{background:#fde8e8;border-color:var(--red)}
-.seat.sL{background:#fdf6e3;border-color:#c79200}
-.seat.sR{background:var(--canvas-blue-light);border-color:var(--canvas-blue)}
+.seat:hover{transform:scale(1.05);box-shadow:var(--shadow-md)}
+.seat:active{transform:scale(.96)}
+.seat.sP{background:var(--green-l);border-color:var(--green)}
+.seat.sF{background:var(--red-l);border-color:var(--red)}
+.seat.sL{background:var(--yellow-l);border-color:var(--yellow)}
+.seat.sR{background:var(--blue-l);border-color:var(--blue)}
 .seat-num{font-size:9px;color:var(--muted);font-weight:600;margin-bottom:2px}
 .seat-name{font-size:11px;font-weight:700;color:var(--dark);line-height:1.2}
 .seat-badge{font-size:14px;font-weight:800;margin-top:4px}
 .sP .seat-badge{color:var(--green)}.sF .seat-badge{color:var(--red)}
-.sL .seat-badge{color:#9a6700}.sR .seat-badge{color:var(--canvas-blue)}
+.sL .seat-badge{color:var(--yellow)}.sR .seat-badge{color:var(--blue)}
 .seat-empty .seat-badge{color:var(--muted)}
-.board-sign{background:var(--canvas-sidebar);color:white;border-radius:4px;padding:6px 20px;
+.board-sign{background:var(--dark);color:white;border-radius:8px;padding:6px 20px;
   text-align:center;font-size:10px;font-weight:700;letter-spacing:2px;margin-bottom:12px}
 
-/* ─── SEGUIMIENTO (SpeedGrader panel) ─── */
+/* ─── SEGUIMIENTO ─── */
 .seg-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;min-height:500px}
-.seg-list{background:#fff;border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.seg-list{background:#fff;border:1px solid #dee2e6;border-radius:12px;overflow:hidden}
 .seg-search{padding:10px;border-bottom:1px solid var(--border)}
-.seg-search input{width:100%;padding:8px 10px;border:1px solid var(--border);
+.seg-search input{width:100%;padding:8px 10px;border:1px solid #dee2e6;
   border-radius:var(--radius);font-family:var(--font);font-size:13px;
-  background:#f5f5f5;color:var(--text)}
-.seg-search input:focus{outline:none;border-color:var(--canvas-blue);background:#fff;box-shadow:0 0 0 2px rgba(7,112,163,.15)}
+  background:#f8f9fa;color:#212529}
+.seg-search input:focus{outline:none;border-color:var(--blue)}
 .seg-student-item{display:flex;align-items:center;gap:10px;padding:10px 12px;
-  border-bottom:1px solid #f0f2f4;cursor:pointer;transition:all .1s}
-.seg-student-item:hover{background:#f5f8fa}
-.seg-student-item.active{background:var(--canvas-blue-light);border-left:3px solid var(--canvas-blue)}
+  border-bottom:1px solid #f3f4f6;cursor:pointer;transition:all .12s}
+.seg-student-item:hover{background:#f8f9fa}
+.seg-student-item.active{background:#dbeafe;border-left:3px solid #2563eb}
 .seg-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;
   justify-content:center;font-weight:700;font-size:13px;color:white;flex-shrink:0}
 .seg-student-name{font-size:12px;font-weight:600;color:var(--dark)}
 .seg-student-meta{font-size:10px;color:var(--muted)}
-.seg-obs-count{margin-left:auto;background:var(--canvas-blue-light);color:var(--canvas-blue);
+.seg-obs-count{margin-left:auto;background:var(--blue-l);color:var(--blue);
   font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
-/* SpeedGrader-style right panel */
-.seg-panel{background:#fff;border:1px solid var(--border);border-radius:4px;padding:0;overflow:hidden}
-.seg-panel-header{display:flex;align-items:center;gap:12px;margin-bottom:0;padding:16px;
-  background:var(--canvas-sidebar);border-bottom:none}
+.seg-panel{background:#fff;border:1px solid #dee2e6;border-radius:12px;padding:16px}
+.seg-panel-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;
+  padding-bottom:14px;border-bottom:1px solid var(--border)}
 .seg-panel-avatar{width:48px;height:48px;border-radius:50%;display:flex;
-  align-items:center;justify-content:center;font-weight:800;font-size:18px;color:white;border:2px solid rgba(255,255,255,.25)}
-.seg-panel-name{font-size:16px;font-weight:700;color:#ffffff}
-.seg-panel-sub{font-size:12px;color:var(--canvas-sidebar-icon)}
-/* Panel body - content after header */
-.seg-panel > *:not(.seg-panel-header){padding-left:16px;padding-right:16px}
-.seg-panel > .quick-grid{padding-top:14px}
-.seg-panel > .card{margin:12px 16px}
-/* Fallback: if JS renders content without wrapper, add padding to panel itself when no header */
-.seg-panel-body{padding:16px}
+  align-items:center;justify-content:center;font-weight:800;font-size:18px;color:white}
+.seg-panel-name{font-size:16px;font-weight:800;color:var(--dark)}
+.seg-panel-sub{font-size:12px;color:var(--muted)}
 .quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.quick-btn{padding:8px 10px;border-radius:4px;border:1px solid transparent;font-family:var(--font);
-  font-size:12px;font-weight:600;cursor:pointer;transition:all .1s;text-align:left}
-.quick-pos{background:#e8f5ee;color:var(--green-d);border-color:rgba(11,135,75,.25)}
-.quick-pos:hover{background:#d0eedd;border-color:var(--green)}
-.quick-neg{background:#fde8e8;color:#b42b2e;border-color:rgba(230,36,41,.25)}
-.quick-neg:hover{background:#fcd0d0;border-color:var(--red)}
-.obs-entry{border:1px solid var(--border);border-radius:4px;padding:10px 12px;
+.quick-btn{padding:8px 10px;border-radius:8px;border:none;font-family:var(--font);
+  font-size:12px;font-weight:600;cursor:pointer;transition:all .12s;text-align:left}
+.quick-pos{background:var(--green-l);color:var(--green-d)}
+.quick-pos:hover{background:#bbf7d0}
+.quick-neg{background:var(--red-l);color:var(--red)}
+.quick-neg:hover{background:#fecaca}
+.obs-entry{border:1px solid var(--border);border-radius:8px;padding:10px 12px;
   margin-bottom:8px;display:flex;gap:10px;align-items:flex-start}
 .obs-entry.pos-entry{border-left:3px solid var(--green)}
 .obs-entry.neg-entry{border-left:3px solid var(--red)}
@@ -284,60 +273,60 @@ header{background:var(--canvas-sidebar);border-bottom:none;
 .obs-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px}
 .obs-del:hover{color:var(--red)}
 .custom-obs{display:flex;gap:8px;margin-top:10px}
-.custom-obs input{flex:1;padding:8px 10px;border:1px solid var(--border);
+.custom-obs input{flex:1;padding:8px 10px;border:1px solid #dee2e6;
   border-radius:var(--radius);font-family:var(--font);font-size:13px;
-  background:#fff;color:var(--text)}
-.custom-obs input:focus{outline:none;border-color:var(--canvas-blue);box-shadow:0 0 0 2px rgba(7,112,163,.15)}
+  background:#fff;color:#212529}
+.custom-obs input:focus{outline:none;border-color:var(--blue)}
 
 /* ─── INFORMES ─── */
-.informe-card{background:#fff;border:1px solid var(--border);border-radius:4px;
+.informe-card{background:#fff;border:1px solid #dee2e6;border-radius:12px;
   overflow:hidden;box-shadow:var(--shadow)}
 .informe-header{padding:16px 20px;color:white}
-.inf-h-blue{background:var(--canvas-sidebar)}
-.inf-h-purple{background:linear-gradient(135deg,#6b2f96,#4a1c6e)}
+.inf-h-blue{background:linear-gradient(135deg,var(--blue),var(--blue-d))}
+.inf-h-purple{background:linear-gradient(135deg,var(--purple),#5b21b6)}
 .informe-body{padding:16px 20px}
 .dim-bar{margin-bottom:12px}
 .dim-bar-label{display:flex;justify-content:space-between;font-size:12px;
   font-weight:600;margin-bottom:4px}
-.dim-bar-track{height:8px;background:#e0e4e8;border-radius:4px;overflow:hidden}
-.dim-bar-fill{height:100%;border-radius:4px;transition:width .4s}
+.dim-bar-track{height:10px;background:#e9ecef;border-radius:5px;overflow:hidden}
+.dim-bar-fill{height:100%;border-radius:5px;transition:width .4s}
 .dist-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .dist-label{font-size:11px;color:var(--muted);width:70px;text-align:right}
-.dist-bar{flex:1;height:20px;background:#e0e4e8;border-radius:3px;overflow:hidden;position:relative}
-.dist-fill{height:100%;border-radius:3px;display:flex;align-items:center;
+.dist-bar{flex:1;height:20px;background:#e9ecef;border-radius:4px;overflow:hidden;position:relative}
+.dist-fill{height:100%;border-radius:4px;display:flex;align-items:center;
   justify-content:flex-end;padding-right:6px;font-size:10px;font-weight:700;color:white}
 .dist-count{font-size:11px;font-weight:700;color:var(--dark);width:30px}
 
-/* ─── INFORME INDIVIDUAL (SpeedGrader detail panel) ─── */
+/* ─── INFORME INDIVIDUAL ─── */
 .ind-select{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
 .ind-select select{padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);
   font-family:var(--font);font-size:13px;min-width:220px}
-.ind-select select:focus{outline:none;border-color:var(--canvas-blue)}
+.ind-select select:focus{outline:none;border-color:var(--blue)}
 .ind-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
-.ind-trim-card{background:#f5f8fa;border:1px solid var(--border);border-radius:4px;padding:14px}
+.ind-trim-card{background:#f8f9fa;border:1px solid #dee2e6;border-radius:10px;padding:14px}
 .ind-trim-title{font-size:12px;font-weight:700;color:var(--muted);
   text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
 .ind-dim{display:flex;justify-content:space-between;align-items:center;
   padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
 .ind-dim:last-child{border-bottom:none}
 .ind-dim-name{color:var(--muted);font-weight:600}
-.ind-obs-item{font-size:11px;padding:4px 8px;border-radius:3px;margin-bottom:4px;display:flex;gap:6px}
-.ind-obs-pos{background:#e8f5ee;color:var(--green-d)}
-.ind-obs-neg{background:#fde8e8;color:#b42b2e}
+.ind-obs-item{font-size:11px;padding:4px 8px;border-radius:6px;margin-bottom:4px;display:flex;gap:6px}
+.ind-obs-pos{background:var(--green-l);color:var(--green-d)}
+.ind-obs-neg{background:var(--red-l);color:var(--red)}
 
-/* ─── MODAL (Canvas dialog style) ─── */
-.modal-overlay{position:fixed;inset:0;background:rgba(45,59,69,.65);z-index:500;
+/* ─── MODAL ─── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;
   display:none;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.open{display:flex}
-.modal{background:#ffffff;border-radius:6px;padding:24px;max-width:540px;
-  width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 16px 48px rgba(45,59,69,.25),0 0 0 1px rgba(45,59,69,.08)}
-.modal-title{font-size:16px;font-weight:700;margin-bottom:14px;color:var(--dark)}
+.modal{background:#ffffff;border-radius:14px;padding:24px;max-width:540px;
+  width:100%;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal-title{font-size:16px;font-weight:800;margin-bottom:14px;color:var(--dark)}
 .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;
   padding-top:14px;border-top:1px solid var(--border)}
 
 /* ─── TOAST ─── */
-.toast{position:fixed;bottom:20px;right:20px;background:var(--canvas-sidebar);color:white;
-  border-radius:4px;padding:12px 18px;font-size:13px;display:flex;
+.toast{position:fixed;bottom:20px;right:20px;background:var(--dark);color:white;
+  border-radius:10px;padding:12px 18px;font-size:13px;display:flex;
   align-items:center;gap:8px;box-shadow:var(--shadow-lg);
   transform:translateY(60px);opacity:0;transition:all .25s;z-index:999}
 .toast.show{transform:translateY(0);opacity:1}
@@ -361,53 +350,55 @@ header{background:var(--canvas-sidebar);border-bottom:none;
   .seat-map{grid-template-columns:repeat(4,1fr)}
 }
 /* ─── VISUAL GRADEBOOK ─── */
-.vgb-wrap{overflow-x:auto;background:#fff;border-radius:4px;border:1px solid var(--border)}
+.vgb-wrap{overflow-x:auto;background:#fff;border-radius:12px;border:1px solid #dee2e6}
 .vgb-table{border-collapse:separate;border-spacing:4px;padding:10px;font-size:12px;width:100%}
-.vgb-table th{padding:7px 6px;border-radius:4px;font-size:10px;font-weight:800;
+.vgb-table th{padding:7px 6px;border-radius:8px;font-size:10px;font-weight:800;
   text-align:center;min-width:76px;white-space:nowrap;letter-spacing:.3px}
-.vgb-th-name{min-width:150px!important;text-align:left!important;background:#eef0f2;color:var(--text)}
-.vgb-th-ser{background:#0a5fa3;color:#ffffff}
-.vgb-th-saber{background:#6b2f96;color:#ffffff}
-.vgb-th-hacer{background:#076b3c;color:#ffffff}
-.vgb-th-prom{background:var(--canvas-sidebar);color:#f0f4f7;min-width:72px!important}
+.vgb-th-name{min-width:150px!important;text-align:left!important;background:#f1f5f9;color:#374151}
+.vgb-th-ser{background:#1e40af;color:#ffffff;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.vgb-th-saber{background:#6d28d9;color:#ffffff;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.vgb-th-hacer{background:#15803d;color:#ffffff;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.vgb-th-prom{background:#0f172a;color:#f8fafc;min-width:72px!important;text-shadow:0 1px 2px rgba(0,0,0,.3)}
 .vgb-week-label{font-size:9px;font-weight:600;opacity:.85;margin-top:2px;letter-spacing:.3px}
-.vgb-table td{padding:2px;border-radius:4px}
+.vgb-table td{padding:2px;border-radius:6px}
 .vgb-td-name{padding:4px 10px!important;font-weight:600;font-size:11px;
-  background:#eef0f2;border-radius:4px;color:var(--text);white-space:nowrap}
+  background:#f1f5f9;border-radius:6px;color:#374151;white-space:nowrap}
 .vgb-table .avg-row td{opacity:.85}
 
-/* Celdas de nota */
+/* Celdas de nota - colores tipo gradebook */
 .vgb-cell{position:relative;display:flex;align-items:center;justify-content:space-between;
-  border-radius:4px;padding:5px 8px;min-height:34px;cursor:pointer;
-  transition:filter .12s;gap:4px}
-.vgb-cell:hover{filter:brightness(1.12)}
+  border-radius:8px;padding:5px 8px;min-height:34px;cursor:pointer;
+  transition:filter .15s;gap:4px}
+.vgb-cell:hover{filter:brightness(1.15)}
 .vgb-cell select{position:absolute;inset:0;opacity:0;width:100%;height:100%;
   cursor:pointer;font-size:13px}
 .vgb-val{font-size:15px;font-weight:800;flex:1;text-align:center;line-height:1}
 .vgb-arr{font-size:10px;opacity:.7}
 
-.vgb-empty{background:#e0e4e8;color:#8b9ba8}
-.vgb-l1{background:#7f1d1d;color:#fca5a5}
-.vgb-l2{background:#92400e;color:#fde68a}
-.vgb-l3{background:#713f12;color:#fef08a}
-.vgb-l4{background:#145a35;color:#86efac}
-.vgb-l5{background:#166534;color:#4ade80}
-.vgb-l6{background:#064e3b;color:#34d399}
+/* Paleta de colores por nivel (0-10 escala SER, 0-45 SABER, etc) */
+.vgb-empty{background:var(--s3);color:var(--muted)}
+.vgb-l1{background:#7f1d1d;color:#fca5a5}  /* <40% Rojo oscuro */
+.vgb-l2{background:#92400e;color:#fde68a}  /* 40-55% Naranja */
+.vgb-l3{background:#713f12;color:#fef08a}  /* 55-65% Amarillo */
+.vgb-l4{background:#14532d;color:#86efac}  /* 65-75% Verde medio */
+.vgb-l5{background:#166534;color:#4ade80}  /* 75-85% Verde */
+.vgb-l6{background:#064e3b;color:#34d399}  /* >85% Verde oscuro */
 
 .vgb-prom-cell{display:flex;align-items:center;justify-content:center;
-  border-radius:4px;padding:5px 8px;min-height:34px;font-weight:800;font-size:14px}
+  border-radius:8px;padding:5px 8px;min-height:34px;font-weight:800;font-size:14px}
 
-.vgb-fullscreen{position:fixed;inset:0;z-index:200;background:var(--bg);
+/* Fullscreen gradebook */
+.vgb-fullscreen{position:fixed;inset:0;z-index:200;background:#f5f5f5;
   padding:12px;overflow:auto;display:none}
 .vgb-fullscreen.open{display:block}
 .vgb-fs-header{display:flex;align-items:center;justify-content:space-between;
   margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.vgb-fs-title{font-size:15px;font-weight:700;color:var(--text)}
+.vgb-fs-title{font-size:15px;font-weight:800;color:var(--text)}
 
 /* ─── THEME PICKER ─── */
 .theme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
-.theme-swatch{border-radius:4px;border:2px solid transparent;cursor:pointer;
-  padding:8px 4px;text-align:center;transition:all .12s;font-size:10px;
+.theme-swatch{border-radius:10px;border:3px solid transparent;cursor:pointer;
+  padding:8px 4px;text-align:center;transition:all .15s;font-size:10px;
   font-weight:700;color:#fff;user-select:none}
 .theme-swatch:hover{transform:scale(1.06);border-color:rgba(255,255,255,0.6)!important}
 .theme-swatch.active{border-color:#fff!important;box-shadow:0 0 0 3px rgba(255,255,255,0.4)}
@@ -416,7 +407,7 @@ header{background:var(--canvas-sidebar);border-bottom:none;
 .custom-color-row{display:flex;align-items:center;gap:10px;margin-top:10px;
   padding-top:10px;border-top:1px solid rgba(255,255,255,0.2)}
 input[type=color].color-pick{width:46px;height:36px;border:2px solid rgba(255,255,255,0.3);
-  border-radius:4px;cursor:pointer;padding:2px;background:none}
+  border-radius:8px;cursor:pointer;padding:2px;background:none}
 
 @media print{
   header,.sidebar,.page-actions,.tabs,#toast,.modal-overlay{display:none!important}
@@ -427,22 +418,13 @@ input[type=color].color-pick{width:46px;height:36px;border:2px solid rgba(255,25
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield}
-/* Scrollbar Canvas style */
-::-webkit-scrollbar-track{background:#eef0f2}
-::-webkit-scrollbar-thumb{background:#b5bec5;border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:#8b9ba8}
-/* Dark sidebar scrollbar */
-.sidebar::-webkit-scrollbar-track{background:rgba(0,0,0,.15)}
-.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px}
-.sidebar::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.25)}
-/* Canvas input refinements */
-select{font-family:var(--font)}
-.date-inp{padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius);
-  font-family:var(--font);font-size:13px;color:var(--text);background:#fff}
-.date-inp:focus{outline:none;border-color:var(--canvas-blue);box-shadow:0 0 0 2px rgba(7,112,163,.15)}
-/* Canvas page breadcrumb-like page titles */
-.page-header{border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:20px}
+/* Scrollbar oscura */
+::-webkit-scrollbar-track{background:#f1f5f9}
+::-webkit-scrollbar-thumb{background:#ced4da;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#adb5bd}
 </style>
+<!-- Google Identity Services para Drive OAuth -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -455,22 +437,33 @@ select{font-family:var(--font)}
     </div>
   </div>
   <button onclick="toggleDarkMode()" id="dark-toggle" title="Modo oscuro"
-    style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:4px;
-    padding:5px 12px;cursor:pointer;font-size:15px;color:rgba(255,255,255,.7);
+    style="background:#f8f9fa;border:1px solid #ced4da;border-radius:6px;
+    padding:5px 12px;cursor:pointer;font-size:15px;color:#6c757d;
     margin-right:4px">🌙</button>
   <button id="sidebar-toggle" onclick="toggleSidebar()" title="Ocultar sidebar"
-    style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:4px;
-    padding:5px 10px;cursor:pointer;font-size:14px;color:rgba(255,255,255,.7);
+    style="background:#f8f9fa;border:1px solid #ced4da;border-radius:6px;
+    padding:5px 10px;cursor:pointer;font-size:14px;color:#6c757d;
     margin-right:4px;transition:all .15s" id="sidebar-toggle">◀</button>
   <div class="header-right">
+    <span id="net-status" title="Estado de conexión" style="font-size:13px;cursor:default">🟢</span>
     <span class="save-pill" id="save-ind">● Sin cambios</span>
+    <button id="btn-drive-upload" onclick="syncToDrive()" title="Subir datos a Drive"
+      style="padding:5px 12px;border-radius:8px;border:1px solid #16a34a;
+      background:#dcfce7;font-size:12px;font-weight:600;cursor:pointer;color:#15803d;transition:all .2s">
+      ⬆️ Subir
+    </button>
+    <button id="btn-drive-restore" onclick="confirmRestoreFromDrive()" title="Restaurar datos desde Drive"
+      style="padding:5px 12px;border-radius:8px;border:1px solid #2563eb;
+      background:#dbeafe;font-size:12px;font-weight:600;cursor:pointer;color:#1d4ed8;transition:all .2s">
+      ⬇️ Restaurar
+    </button>
     <div style="display:inline-flex;flex-direction:column;align-items:center">
-      <button id="drive-btn" onclick="configurarDrive()"
-        title="Sincronizar con Google Drive"
-        style="padding:5px 12px;border-radius:4px;border:1px solid rgba(255,255,255,.18);
-        background:rgba(255,255,255,.08);font-size:12px;font-weight:600;cursor:pointer;
-        color:rgba(255,255,255,.75);transition:all .2s">☁️ Drive</button>
-      <div id="drive-status" style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px"></div>
+      <button id="drive-btn" onclick="handleDriveBtn()"
+        title="Google Drive"
+        style="padding:5px 12px;border-radius:8px;border:1px solid #ced4da;
+        background:#f8f9fa;font-size:12px;font-weight:600;cursor:pointer;
+        color:#374151;transition:all .2s">☁️ Drive</button>
+      <div id="drive-status" style="font-size:9px;color:#6b7280;margin-top:1px"></div>
     </div>
     <button class="btn btn-outline btn-sm" id="btn-import" style="display:none" onclick="document.getElementById('fi-json-app').click()">📂 Importar</button>
     <input type="file" id="fi-json-app" accept=".json" onchange="loadJSONInApp(this)" style="display:none">
@@ -497,6 +490,18 @@ select{font-family:var(--font)}
     </button>
     <input type="file" id="fi-json" accept=".json" onchange="loadJSON(this)" style="display:none">
     <div id="restore-area"></div>
+    <div style="margin-top:16px;border:2px solid #3b82f6;border-radius:12px;padding:16px;background:#eff6ff">
+      <p style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:10px;text-align:center">
+        ☁️ ¿Ya tenés datos guardados en otro dispositivo?
+      </p>
+      <button class="btn btn-blue" style="width:100%;justify-content:center;padding:12px;font-size:14px"
+        onclick="connectAndRestore()">
+        🔗 Conectar con Google y restaurar datos
+      </button>
+      <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">
+        Toca aquí para sincronizar desde Google Drive
+      </p>
+    </div>
   </div>
 </div>
 
@@ -534,6 +539,7 @@ select{font-family:var(--font)}
       <div class="sidebar-bottom">
         <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center" onclick="document.getElementById('fi-xlsx-add').click()">+ Agregar curso</button>
         <input type="file" id="fi-xlsx-add" accept=".xlsx" multiple onchange="addCourses(this)" style="display:none">
+        <button class="btn btn-blue btn-sm" style="width:100%;justify-content:center;margin-top:6px" onclick="abrirVolcadoModal()">📤 Volcar a Excel</button>
       </div>
     </aside>
     <main class="main" id="main"></main>
@@ -810,7 +816,7 @@ function exportJSON(){
 // ════════════════════════════════════════════════
 
 // ⚠️ REEMPLAZÁ esto con tu Client ID de Google Cloud Console
-const DRIVE_CLIENT_ID = localStorage.getItem('rmDriveClientId') || '';
+const DRIVE_CLIENT_ID = '350319287742-0j0tl5b32addfg0spa7ag5ik28c38u1t.apps.googleusercontent.com';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 const DRIVE_FILE_NAME = 'registro_musical_2026.json';
 
@@ -845,19 +851,31 @@ function updateDriveUI(connected) {
   const btn = document.getElementById('drive-btn');
   const status = document.getElementById('drive-status');
   if (!btn) return;
+  const btnUp = document.getElementById('btn-drive-upload');
+  const btnRest = document.getElementById('btn-drive-restore');
   if (connected) {
     btn.innerHTML = '☁️ Drive ✓';
     btn.style.background = '#16a34a';
     btn.style.borderColor = '#15803d';
+    btn.style.color = 'white';
     if (status) {
       status.textContent = lastSyncTime ? '⟳ ' + lastSyncTime : '⟳ Sincronizado';
       status.style.color = '#16a34a';
+    }
+
+    // Mostrar botón en landing si aún está visible
+    const landingArea = document.getElementById('drive-landing-area');
+    const landingScreen = document.getElementById('screen-landing');
+    if (landingArea && landingScreen && landingScreen.style.display !== 'none') {
+      landingArea.style.display = 'block';
     }
   } else {
     btn.innerHTML = '☁️ Drive';
     btn.style.background = '';
     btn.style.borderColor = '';
+    btn.style.color = '';
     if (status) { status.textContent = ''; }
+
   }
 }
 
@@ -930,13 +948,16 @@ async function syncToDrive() {
     const now = new Date();
     lastSyncTime = now.toLocaleTimeString('es-BO', {hour:'2-digit', minute:'2-digit'});
     updateDriveUI(true);
-    console.log('Drive sync OK:', lastSyncTime);
+    hasChanges = false;
+    showToast('✅ Datos subidos a Drive correctamente', 'ok');
   } catch(e) {
     console.error('Drive sync error:', e);
     if (e.message && e.message.includes('401')) {
       driveToken = null;
       showToast('Sesión Drive expirada — reconectando...', 'err');
       setTimeout(initDriveAuth, 1500);
+    } else {
+      showToast('Error al subir a Drive: ' + e.message, 'err');
     }
   }
 }
@@ -964,8 +985,8 @@ async function loadFromDrive() {
     const data = await resp.json();
     if (data.courses) {
       appData = data;
-      saveData();
-      location.reload();
+      autoSave();
+      startApp();
     }
   } catch(e) {
     showToast('Error cargando Drive: ' + e.message, 'err');
@@ -976,7 +997,7 @@ async function loadFromDrive() {
 function startAutoSync() {
   if (syncInterval) clearInterval(syncInterval);
   syncInterval = setInterval(() => {
-    if (navigator.onLine && driveToken && hasChanges()) {
+    if (navigator.onLine && driveToken && hasChanges) {
       syncToDrive();
     }
   }, 3 * 60 * 1000);
@@ -993,37 +1014,92 @@ window.addEventListener('offline', () => {
   showToast('📵 Sin conexión — modo offline activo', 'err');
 });
 
+// ── Botón Drive ──
+function connectAndRestore() {
+  google.accounts.oauth2.initTokenClient({
+    client_id: DRIVE_CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback: async (resp) => {
+      if (!resp.error && resp.access_token) {
+        driveToken = resp.access_token;
+        updateDriveUI(true);
+        startAutoSync();
+        showToast('✅ Conectado a Drive, cargando datos...', 'ok');
+        await loadFromDrive();
+      } else {
+        showToast('Error al conectar con Google', 'err');
+      }
+    }
+  }).requestAccessToken();
+}
+
+function confirmRestoreFromDrive() {
+  if (!driveToken) {
+    if (confirm('Primero necesitás conectarte a Google Drive. ¿Conectar ahora?')) {
+      google.accounts.oauth2.initTokenClient({
+        client_id: DRIVE_CLIENT_ID,
+        scope: DRIVE_SCOPE,
+        callback: async (resp) => {
+          if (!resp.error && resp.access_token) {
+            driveToken = resp.access_token;
+            updateDriveUI(true);
+            startAutoSync();
+            if (confirm('✅ Conectado. ¿Restaurar datos desde Drive ahora?')) {
+              loadFromDrive();
+            }
+          }
+        }
+      }).requestAccessToken();
+    }
+    return;
+  }
+  if (confirm('¿Restaurar datos desde Google Drive? Se reemplazarán los datos actuales.')) {
+    loadFromDrive();
+  }
+}
+
+function landingLoadFromDrive() {
+  if (!driveToken) {
+    // Conectar primero y luego cargar
+    google.accounts.oauth2.initTokenClient({
+      client_id: DRIVE_CLIENT_ID,
+      scope: DRIVE_SCOPE,
+      callback: async (resp) => {
+        if (!resp.error && resp.access_token) {
+          driveToken = resp.access_token;
+          updateDriveUI(true);
+          startAutoSync();
+          await loadFromDrive();
+        }
+      }
+    }).requestAccessToken();
+  } else {
+    loadFromDrive();
+  }
+}
+
+function handleDriveBtn() {
+  if (driveToken) { configurarDrive(); } else { initDriveAuth(); }
+}
+
 // ── Configurar Client ID ──
 function configurarDrive() {
-  const actual = localStorage.getItem('rmDriveClientId') || '';
+  const conectado = driveToken ? true : false;
   openModal(`
-    <div class="modal-title">☁️ Configurar Google Drive</div>
+    <div class="modal-title">☁️ Google Drive</div>
     <p style="font-size:12px;color:var(--muted);margin-bottom:12px">
-      Pegá tu <b>Client ID</b> de Google Cloud Console para activar la sincronización automática.</p>
-    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px;margin-bottom:12px;font-size:11px;color:#0369a1">
-      <b>¿Cómo obtenerlo?</b><br>
-      1. console.cloud.google.com<br>
-      2. Nuevo proyecto → APIs → Drive API → Habilitar<br>
-      3. Credenciales → OAuth → App web → Copiar Client ID
+      ${conectado ? '✅ Conectado y sincronizando.' : 'Tocá <b>Conectar</b> para sincronizar con Google Drive.'}</p>
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px;margin-bottom:14px;font-size:10px;color:#0369a1;font-family:monospace;word-break:break-all">
+      ${DRIVE_CLIENT_ID}
     </div>
-    <input id="drive-client-id-inp" type="text" placeholder="123456789-abc.apps.googleusercontent.com"
-      value="${escH(actual)}"
-      style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;
-      font-size:12px;font-family:monospace;margin-bottom:8px">
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
-      ${actual ? '<button class="btn btn-outline" onclick="desconectarDrive()">Desconectar</button>' : ''}
-      <button class="btn btn-blue" onclick="guardarClientId()">Guardar y conectar</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cerrar</button>
+      <button class="btn btn-outline" onclick="desconectarDrive()">Desconectar</button>
+      <button class="btn btn-green" onclick="closeModal();loadFromDrive()">⬇️ Restaurar desde Drive</button>
+      <button class="btn btn-blue" onclick="closeModal();initDriveAuth()">🔗 Conectar</button>
     </div>`);
 }
 
-function guardarClientId() {
-  const val = document.getElementById('drive-client-id-inp').value.trim();
-  if (!val) { showToast('Ingresá el Client ID', 'err'); return; }
-  localStorage.setItem('rmDriveClientId', val);
-  closeModal();
-  location.reload();
-}
 
 function desconectarDrive() {
   localStorage.removeItem('rmDriveClientId');
@@ -1036,28 +1112,33 @@ function desconectarDrive() {
   showToast('Drive desconectado', 'ok');
 }
 
-// Inicializar al cargar si ya hay client ID
+// Inicializar al cargar - reconexión silenciosa
 window.addEventListener('load', () => {
-  const savedClientId = localStorage.getItem('rmDriveClientId');
-  if (savedClientId && navigator.onLine) {
-    // Auto-reconectar silenciosamente
+  if (DRIVE_CLIENT_ID && navigator.onLine) {
     setTimeout(() => {
       try {
-        const client = google.accounts.oauth2.initTokenClient({
-          client_id: savedClientId,
+        google.accounts.oauth2.initTokenClient({
+          client_id: DRIVE_CLIENT_ID,
           scope: DRIVE_SCOPE,
-          prompt: '',
+          prompt: 'none',
           callback: (resp) => {
-            if (!resp.error) {
+            if (!resp.error && resp.access_token) {
               driveToken = resp.access_token;
               updateDriveUI(true);
               startAutoSync();
+              // Mostrar botón Drive en landing si aún no hay datos cargados
+              const landingArea = document.getElementById('drive-landing-area');
+              const landingScreen = document.getElementById('screen-landing');
+              if (landingArea && landingScreen && landingScreen.style.display !== 'none') {
+                landingArea.style.display = 'block';
+              }
             }
-          }
-        });
-        client.requestAccessToken({prompt: ''});
+            // Si falla silenciosamente, el usuario toca Drive para conectar
+          },
+          error_callback: () => {}
+        }).requestAccessToken({prompt: 'none'});
       } catch(e) {}
-    }, 2000);
+    }, 2500);
   }
 });
 
@@ -1193,13 +1274,11 @@ window.addEventListener('load',()=>{
     try{
       const d=JSON.parse(saved);
       if(d.courses&&Object.keys(d.courses).length>0){
-        const names=Object.values(d.courses).map(c=>c.meta.curso).join(', ');
-        document.getElementById('restore-area').innerHTML=`
-          <div class="restore-banner" style="margin-top:14px">
-            <h4>✓ Sesion guardada encontrada</h4>
-            <p style="margin:4px 0 10px">Cursos: ${escH(names)}</p>
-            <button class="btn btn-green btn-sm" onclick="restoreLocal()">Restaurar sesion anterior</button>
-          </div>`;
+        // Auto-restaurar directamente sin pedir confirmación
+        appData=d;
+        if(!appData.currentCourse) appData.currentCourse=Object.keys(d.courses)[0];
+        startApp();
+        showToast('✓ Sesión restaurada automáticamente','ok');
       }
     }catch(e){}
   }
@@ -2665,12 +2744,12 @@ function scoreClass(val,max){const p=val/max;return p>=0.7?'badge-g':p>=0.5?'bad
 let isDark = localStorage.getItem('rmDark') === '1';
 
 const DARK_VARS = {
-  '--bg':'#1a2128','--white':'#232d35','--s1':'#1a2128','--s2':'#141b22',
-  '--s3':'#0f151a','--border':'#354047','--text':'#d8e2ea','--muted':'#8b9ba8','--dark':'#0f151a'
+  '--bg':'#1e2433','--white':'#252d3d','--s1':'#1a2030','--s2':'#161c2b',
+  '--s3':'#111827','--border':'#374151','--text':'#e2e8f0','--muted':'#94a3b8','--dark':'#0f172a'
 };
 const LIGHT_VARS = {
-  '--bg':'#f5f5f5','--white':'#ffffff','--s1':'#f5f8fa','--s2':'#eef0f2',
-  '--s3':'#dee2e6','--border':'#c7cdd1','--text':'#2d3b45','--muted':'#6b7780','--dark':'#2d3b45'
+  '--bg':'#f5f5f5','--white':'#ffffff','--s1':'#f8f9fa','--s2':'#e9ecef',
+  '--s3':'#dee2e6','--border':'#ced4da','--text':'#212529','--muted':'#6c757d','--dark':'#343a40'
 };
 
 function applyDarkMode(dark) {
@@ -2681,11 +2760,11 @@ function applyDarkMode(dark) {
   const btn = document.getElementById('dark-toggle');
   if(btn) btn.textContent = dark ? '☀️' : '🌙';
 
-  // Header stays dark always (Canvas style), sidebar also
+  // Header y sidebar
   const header = document.querySelector('header');
   const sidebar = document.querySelector('.sidebar');
-  if(header) header.style.background = ''; // keep canvas sidebar color from CSS
-  if(sidebar) sidebar.style.background = dark ? '#1a2128' : '';
+  if(header) header.style.background = dark ? '#161c2b' : '#ffffff';
+  if(sidebar) sidebar.style.background = dark ? '#161c2b' : '#ffffff';
 
   // GB wrap, cards, VGB
   document.querySelectorAll('.gb-wrap,.card,.stat-card,.informe-card,.seg-list,.seg-panel,.vgb-wrap,.ind-trim-card,.modal,.landing-card').forEach(el => {
@@ -2753,6 +2832,198 @@ function getCellVal(ws,row,col){
 function escH(str){
   return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+
+// ════════════════════════════════════════════════
+// VOLCADO A EXCEL (.xlsx)
+// ════════════════════════════════════════════════
+function abrirVolcadoModal() {
+  const c = getCourse(); if (!c) return;
+  openModal(`
+    <div class="modal-title">📤 Volcar datos a Excel</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+      Genera un archivo Excel con el formato oficial del colegio para el curso actual: <strong>${escH(c.meta.curso)}</strong></p>
+    <div style="display:grid;gap:8px">
+      <label style="font-size:12px;font-weight:700">Seleccionar trimestre a volcar:</label>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="volcadoTrim(1)">1er Trimestre</button>
+        <button class="btn btn-outline btn-sm" onclick="volcadoTrim(2)">2do Trimestre</button>
+        <button class="btn btn-outline btn-sm" onclick="volcadoTrim(3)">3er Trimestre</button>
+      </div>
+      <button class="btn btn-blue" style="margin-top:4px" onclick="volcadoTrim('todos')">📤 Volcar los 3 trimestres</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    </div>`);
+}
+
+function volcadoTrim(selTrim) {
+  closeModal();
+  const c = getCourse(); if (!c) return;
+  
+  // Necesita el xlsx original para preservar fórmulas y formato
+  if (!appData._xlsxBase64 || !appData._xlsxBase64[c.meta.courseId]) {
+    showToast('⚠️ Cargá primero el .xlsx original del curso para volcar','err');
+    // Abrir selector de archivo
+    const fi = document.createElement('input');
+    fi.type = 'file'; fi.accept = '.xlsx';
+    fi.onchange = (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      const r = new FileReader();
+      r.onload = (ev) => {
+        if (!appData._xlsxBase64) appData._xlsxBase64 = {};
+        appData._xlsxBase64[c.meta.courseId] = ev.target.result;
+        showToast('✅ Plantilla cargada. Ahora presioná Volcar nuevamente','ok');
+      };
+      r.readAsDataURL(file);
+    };
+    fi.click();
+    return;
+  }
+  
+  if (typeof XLSX === 'undefined') { showToast('Error: librería XLSX no cargada','err'); return; }
+  
+  const trims = selTrim === 'todos' ? [1,2,3] : [parseInt(selTrim)];
+  
+  // Cargar workbook desde base64
+  const b64 = appData._xlsxBase64[c.meta.courseId].split(',')[1];
+  const wb = XLSX.read(b64, {type:'base64'});
+  
+  trims.forEach(trim => {
+    buildAttSheet(wb, c, trim);
+    buildCalSheet(wb, c, trim);
+  });
+  
+  const trimLabel = selTrim === 'todos' ? 'Todos' : TRIM_LABELS[selTrim]+'Trim';
+  const fname = `${c.meta.curso}_VOLCADO_${trimLabel}.xlsx`.replace(/\s+/g,'_');
+  XLSX.writeFile(wb, fname);
+  showToast('✅ Excel volcado: ' + fname, 'ok');
+}
+
+function buildAttSheet(wb, c, trim) {
+  // Modificar hoja existente preservando fórmulas y formato
+  // Fila 7: fechas en columnas desde col D (índice 3)
+  // Filas 9+: asistencia P/F/L/R en las mismas columnas
+  
+  const trimNames = {1:'1Trim', 2:'2Trim', 3:'3Trim'};
+  const sheetName = 'Asistencia ' + trimNames[trim];
+  if (!wb.Sheets[sheetName]) return;
+  
+  const ws = wb.Sheets[sheetName];
+  // Quitar protección de hoja
+  if (ws['!protect']) delete ws['!protect'];
+  const dates = Object.keys(c.attendance[trim])
+    .filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+  
+  // Fila 7 (r:6): limpiar y escribir fechas desde col D (c:3)
+  for (let col = 3; col < 100; col++) {
+    const addr = XLSX.utils.encode_cell({r:6, c:col});
+    if (ws[addr]) delete ws[addr];
+  }
+  dates.forEach((date, i) => {
+    const parts = date.split('-');
+    const jsDate = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+    const excelDate = Math.floor((jsDate - new Date(1899,11,30)) / 86400000);
+    const addr = XLSX.utils.encode_cell({r:6, c:3+i});
+    ws[addr] = {t:'n', v:excelDate, z:'DD/MM/YYYY'};
+  });
+  
+  // Filas 9+ (r:8+): escribir asistencia por estudiante
+  c.students.forEach((st, i) => {
+    const r = 8 + i;
+    for (let col = 3; col < 100; col++) {
+      const addr = XLSX.utils.encode_cell({r, c:col});
+      if (ws[addr]) delete ws[addr];
+    }
+    dates.forEach((date, j) => {
+      const val = (c.attendance[trim][date] || {})[i] || ' ';
+      const addr = XLSX.utils.encode_cell({r, c:3+j}); // col D en adelante
+      ws[addr] = {t:'s', v:val};
+    });
+  });
+  
+  // Actualizar rango
+  const lastCol = Math.max(3 + dates.length, 30);
+  const lastRow = 8 + c.students.length;
+  ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:lastRow, c:lastCol}});
+}
+
+function buildCalSheet(wb, c, trim) {
+  // Modificar hoja existente preservando fórmulas de promedios
+  // Estructura: col D-F=SER(3), G=PromSER, H-O=SABER(8), P=PromSABER,
+  //             Q-X=HACER(8), Y=PromHACER, Z=Auto, AA=Total
+  // En índices 0-based: D=3, F=5, G=6, H=7, O=14, P=15, Q=16, X=23, Y=24, Z=25, AA=26
+  
+  const trimSheets = {1:'Calf. 1er Trim', 2:'Calf. 2do Trim', 3:'Calf. 3er Trim'};
+  const sheetName = trimSheets[trim];
+  if (!wb.Sheets[sheetName]) return;
+  
+  const ws = wb.Sheets[sheetName];
+  // Quitar protección de hoja
+  if (ws['!protect']) delete ws['!protect'];
+  const serActs = c.activities[trim].ser;
+  const sabActs = c.activities[trim].saber;
+  const hacActs = c.activities[trim].hacer;
+  
+  // Fila 8 (r:7): nombres de actividades verticales
+  // SER: cols D-F (3-5)
+  serActs.forEach((name, i) => {
+    const addr = XLSX.utils.encode_cell({r:7, c:3+i});
+    ws[addr] = {t:'s', v:name};
+  });
+  // SABER: cols H-O (7-14)
+  sabActs.forEach((name, i) => {
+    const addr = XLSX.utils.encode_cell({r:7, c:7+i});
+    ws[addr] = {t:'s', v:name};
+  });
+  // HACER: cols Q-X (16-23)
+  hacActs.forEach((name, i) => {
+    const addr = XLSX.utils.encode_cell({r:7, c:16+i});
+    ws[addr] = {t:'s', v:name};
+  });
+  
+  // Filas 9+: notas (r:8+)
+  c.students.forEach((st, i) => {
+    const r = 8 + i;
+    const g = (c.grades[trim] || {})[i] || {ser:[], saber:[], hacer:[], auto:null};
+    
+    // SER: cols D-F (c:3-5)
+    for (let j = 0; j < 3; j++) {
+      const v = g.ser[j];
+      const addr = XLSX.utils.encode_cell({r, c:3+j});
+      ws[addr] = v !== null && v !== undefined ? {t:'n', v:v} : {t:'s', v:' '};
+    }
+    // SABER: cols H-O (c:7-14)
+    for (let j = 0; j < 8; j++) {
+      const v = g.saber[j];
+      const addr = XLSX.utils.encode_cell({r, c:7+j});
+      ws[addr] = v !== null && v !== undefined ? {t:'n', v:v} : {t:'s', v:' '};
+    }
+    // HACER: cols Q-X (c:16-23)
+    for (let j = 0; j < 8; j++) {
+      const v = g.hacer[j];
+      const addr = XLSX.utils.encode_cell({r, c:16+j});
+      ws[addr] = v !== null && v !== undefined ? {t:'n', v:v} : {t:'s', v:' '};
+    }
+    // AUTOEVALUACIÓN: col Z (c:25)
+    const auto = g.auto;
+    const addrAuto = XLSX.utils.encode_cell({r, c:25});
+    ws[addrAuto] = auto !== null && auto !== undefined ? {t:'n', v:auto} : {t:'s', v:' '};
+  });
+}
+
+// ════════════════════════════════════════════════
+// INDICADOR ONLINE / OFFLINE
+// ════════════════════════════════════════════════
+function updateNetStatus(){
+  const el=document.getElementById('net-status');
+  if(!el) return;
+  if(navigator.onLine){el.textContent='🟢';el.title='Online';}
+  else{el.textContent='🟠';el.title='Offline — modo sin conexión';}
+}
+window.addEventListener('online', updateNetStatus);
+window.addEventListener('offline', updateNetStatus);
+document.addEventListener('DOMContentLoaded', updateNetStatus);
 </script>
 </body>
 </html>
