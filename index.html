@@ -1167,13 +1167,11 @@ window.addEventListener('load',()=>{
     try{
       const d=JSON.parse(saved);
       if(d.courses&&Object.keys(d.courses).length>0){
-        const names=Object.values(d.courses).map(c=>c.meta.curso).join(', ');
-        document.getElementById('restore-area').innerHTML=`
-          <div class="restore-banner" style="margin-top:14px">
-            <h4>✓ Sesion guardada encontrada</h4>
-            <p style="margin:4px 0 10px">Cursos: ${escH(names)}</p>
-            <button class="btn btn-green btn-sm" onclick="restoreLocal()">Restaurar sesion anterior</button>
-          </div>`;
+        // Auto-restaurar directamente sin pedir confirmación
+        appData=d;
+        if(!appData.currentCourse) appData.currentCourse=Object.keys(d.courses)[0];
+        startApp();
+        showToast('✓ Sesión restaurada automáticamente','ok');
       }
     }catch(e){}
   }
