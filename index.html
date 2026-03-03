@@ -1625,6 +1625,16 @@ function clearAllAtt(trim){
   });
   markChanged();
   renderAttList(trim);
+  }
+function deleteAttDate(trim, date){
+  const c=getCourse();
+  if(!c) return;
+  if(!confirm('¿Eliminar registro del '+date+'?')) return;
+  delete c.attendance[trim][date];
+  markChanged();
+  renderAttHist(trim);
+  showToast('Fecha eliminada','ok');
+}
 }
 function renderAttHist(trim){
   const c=getCourse(); if(!c) return;
@@ -1633,7 +1643,7 @@ function renderAttHist(trim){
   if(!dates.length){cont.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Sin fechas registradas</div>';return}
   cont.innerHTML=`<div class="gb-wrap"><table class="gb-table">
     <thead><tr class="row-names"><th>#</th><th style="text-align:left;min-width:150px">Nombre</th>
-      ${dates.map(d=>`<th style="font-size:10px">${d.slice(5)}</th>`).join('')}<th>F</th>
+      ${dates.map(d=>`<th style="font-size:10px">${d.slice(5)}<br><button onclick="deleteAttDate(${trim},'${d}')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:11px" title="Eliminar">🗑️</button></th>`).join('')}
     </tr></thead><tbody>
     ${c.students.map((st,i)=>{
       const faltas=dates.filter(d=>c.attendance[trim][d][i]==='F').length;
