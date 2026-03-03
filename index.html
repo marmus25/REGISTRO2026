@@ -654,7 +654,7 @@ function parseCourse(wb,fileName){
   const wsF=wb.Sheets['Filiacion'];
   const students=[];
   if(wsF){
-    for(let r=9;r<=40;r++){
+    for(let r=9;r<=60;r++){
       const nro=getCellVal(wsF,r,2), nombre=getCellVal(wsF,r,3), sexo=getCellVal(wsF,r,6);
       if(nro&&nombre) students.push({nro,nombre:nombre.toString().trim(),sexo:sexo||''});
     }
