@@ -1474,6 +1474,7 @@ function renderAtt(trim){
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
         <input type="date" class="date-inp" id="att-date-${trim}" value="${today}" onchange="renderAttList(${trim})">
         <button class="btn btn-green btn-sm" onclick="markAll(${trim},'P')">✅ Todos presentes</button>
+        <button class="btn btn-outline btn-sm" onclick="clearAllAtt(${trim})">✖ Desmarcar</button>
         <div class="legend">
           <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>P=Presente</div>
           <div class="leg"><div class="leg-dot" style="background:var(--red)"></div>F=Falta</div>
@@ -1614,7 +1615,17 @@ function markAllSeat(trim,val){
   c.students.forEach((_,i)=>c.attendance[trim][date][i]=val);
   renderSeatMap(trim); markChanged(); showToast('Todos marcados como '+val,'ok');
 }
-
+function clearAllAtt(trim){
+  const c=getCourse();
+  const date=document.getElementById('att-date-'+trim).value;
+  if(!c||!date) return;
+  c.students.forEach((_,i)=>{
+    if(c.attendance[trim][date])
+      delete c.attendance[trim][date][i];
+  });
+  markChanged();
+  renderAttList(trim);
+}
 function renderAttHist(trim){
   const c=getCourse(); if(!c) return;
   const dates=Object.keys(c.attendance[trim]).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
