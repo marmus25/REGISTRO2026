@@ -1748,10 +1748,10 @@ function renderCalMobile(dim, trim){
   const avgCells = isAuto ? (()=>{
     const vals=c.students.map((_,i)=>(c.grades[trim][i]||{}).auto).filter(v=>v!=null);
     const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
-    return `<td style="text-align:center;font-size:12px;font-weight:700;padding:6px 4px">${avg!==null?avg.toFixed(1):'—'}</td>`;
+    return `<td style="text-align:center;font-size:12px;font-weight:700;padding:6px 4px">${avg!==null?avg:'—'}</td>`;
   })() : acts.map((_,ai)=>{
     const avg=avgRow[ai];
-    return `<td style="text-align:center;font-size:12px;font-weight:700;padding:6px 4px">${avg!==null?avg.toFixed(1):'—'}</td>`;
+    return `<td style="text-align:center;font-size:12px;font-weight:700;padding:6px 4px">${avg!==null?avg:'—'}</td>`;
   }).join('');
 
   // Promedio dim para columna fija derecha
@@ -1774,6 +1774,7 @@ function renderCalMobile(dim, trim){
             color:var(--text);font-family:var(--font)"
             min="0" max="5" value="${g.auto!=null?g.auto:''}" placeholder="—"
             onfocus="this.select()"
+            oninput="if(this.value>5)this.value=5;if(this.value<0)this.value=0"
             onkeydown="navEnter(event,this)"
             onchange="setAuto(${trim},${i},this.value);updateMobilePromRow(${trim},'${dim}')">
          </td>`
@@ -1786,6 +1787,7 @@ function renderCalMobile(dim, trim){
               color:var(--text);font-family:var(--font)"
               min="0" max="${cfg.max}" value="${val!=null?val:''}" placeholder="—"
               onfocus="this.select()"
+              oninput="if(parseInt(this.value)>${cfg.max})this.value=${cfg.max};if(this.value<0)this.value=0"
               onkeydown="navEnter(event,this)"
               onchange="setGrade(${trim},${i},'${dim}',${ai},this.value);updateMobilePromRow(${trim},'${dim}')">
           </td>`;
@@ -1804,7 +1806,7 @@ function renderCalMobile(dim, trim){
         style="position:sticky;right:0;min-width:52px;text-align:center;
         background:${pc.bg};color:${pc.text};border-left:2px solid ${pc.border};
         font-size:16px;font-weight:800;padding:4px 6px;z-index:2">
-        ${prom!==null?prom.toFixed(1):'—'}
+        ${prom!==null?prom:'—'}
       </td>
     </tr>`;
   }).join('');
@@ -1837,7 +1839,7 @@ function renderCalMobile(dim, trim){
             <td style="position:sticky;right:0;text-align:center;font-size:13px;font-weight:800;
               background:${avgDimColor.bg};color:${avgDimColor.text};
               border-left:2px solid ${avgDimColor.border};padding:6px 4px;z-index:2">
-              ${avgDimVal!==null?avgDimVal.toFixed(1):'—'}
+              ${avgDimVal!==null?avgDimVal:'—'}
             </td>
           </tr>
         </thead>
@@ -1869,7 +1871,7 @@ function renderCalTotal(trim){
       const cc=getColor(val,max);
       return `<td style="text-align:center;padding:6px 4px;font-size:14px;font-weight:700;
         background:${cc.bg};color:${cc.text};border:1px solid var(--border)">
-        ${val!==null?val.toFixed(1):'—'}</td>`;
+        ${val!==null?val:'—'}</td>`;
     };
     return `<tr style="border-bottom:1px solid var(--border)">
       <td style="padding:8px 10px;min-width:130px;font-size:12px;font-weight:700;
@@ -2014,7 +2016,7 @@ function renderCalEstrellas(trim){
           ${'★'.repeat(promStars)}${'☆'.repeat(5-promStars)}
         </div>
         <div style="font-size:10px;color:var(--ser-c);font-weight:700">
-          Prom: ${prom!==null?prom.toFixed(1):'—'}/10
+          Prom: ${prom!==null?prom:'—'}/10
         </div>
       </td>
       ${actCells}
@@ -2066,7 +2068,7 @@ function tapStar(e, container){
   const promDiv=stRow?.querySelector('td:first-child div:nth-child(3)');
   if(promDiv) promDiv.textContent='★'.repeat(promStars)+'☆'.repeat(5-promStars);
   const promVal=stRow?.querySelector('td:first-child div:last-child');
-  if(promVal) promVal.textContent='Prom: '+(prom!==null?prom.toFixed(1):'—')+'/10';
+  if(promVal) promVal.textContent='Prom: '+(prom!==null?prom:'—')+'/10';
 }
 
 function hoverStars(span, n){
@@ -2120,7 +2122,7 @@ function updateMobilePromRow(trim, dim){
     if(p>=0.7){cell.style.background='#dcfce7';cell.style.color='#16a34a';}
     else if(p>=0.5){cell.style.background='#fef9c3';cell.style.color='#ca8a04';}
     else{cell.style.background='#fee2e2';cell.style.color='#dc2626';}
-    cell.textContent=prom.toFixed(1);
+    cell.textContent=prom;
   });
 }
 
@@ -2139,7 +2141,7 @@ function renderCalMap(trim){
         padding:8px 4px;text-align:center;min-height:66px;display:flex;flex-direction:column;align-items:center">
         <div style="font-size:9px;color:var(--muted);font-weight:600">${st.nro}</div>
         <div style="font-size:11px;font-weight:700;color:var(--dark);line-height:1.2;margin:2px 0">${escH(ap)}</div>
-        <div style="font-size:13px;font-weight:800;color:${vc}">${val!==null?val.toFixed(1):'—'}</div>
+        <div style="font-size:13px;font-weight:800;color:${vc}">${val!==null?val:'—'}</div>
       </div>`;
     }).join('');
     return `<div style="margin-bottom:20px">
@@ -2341,13 +2343,33 @@ function updateVGBCell(inp){
 function setGrade(trim,idx,dim,ai,val){
   const c=getCourse(); if(!c) return;
   if(!c.grades[trim][idx]) c.grades[trim][idx]={ser:[],saber:[],hacer:[],auto:null};
-  c.grades[trim][idx][dim][ai]=val!==''?parseFloat(val):null;
+  if(val===''){c.grades[trim][idx][dim][ai]=null;markChanged();return;}
+  const maxMap={ser:10,saber:45,hacer:40};
+  const max=maxMap[dim];
+  let n=parseInt(val);
+  if(isNaN(n)||n<0){
+    showToast('Nota inválida','err');
+    // Revertir el input al valor anterior
+    const prev=c.grades[trim][idx][dim][ai];
+    const inputs=document.querySelectorAll(`input[onchange*="setGrade(${trim},${idx},'${dim}',${ai}"]`);
+    inputs.forEach(inp=>inp.value=prev!=null?prev:'');
+    return;
+  }
+  if(n>max){
+    showToast('Máximo '+max+' pts para '+dim.toUpperCase(),'err');
+    n=max;
+  }
+  c.grades[trim][idx][dim][ai]=n;
   markChanged();
 }
 function setAuto(trim,idx,val){
   const c=getCourse(); if(!c) return;
   if(!c.grades[trim][idx]) c.grades[trim][idx]={ser:[],saber:[],hacer:[],auto:null};
-  c.grades[trim][idx].auto=val!==''?parseFloat(val):null;
+  if(val===''){c.grades[trim][idx].auto=null;markChanged();return;}
+  let n=parseInt(val);
+  if(isNaN(n)||n<0){showToast('Nota inválida','err');return;}
+  if(n>5){showToast('Máximo 5 pts para AUTO','err');n=5;}
+  c.grades[trim][idx].auto=n;
   markChanged();
 }
 
@@ -3052,11 +3074,11 @@ function renderIndCard(idx){
     return `<div class="ind-trim-card">
       <div class="ind-trim-title">${TRIM_LABELS[t]}° Trimestre</div>
       <div class="ind-dim"><span class="ind-dim-name" style="color:var(--ser-c)">SER</span>
-        <span class="badge ${pS!==null?scoreClass(pS,10):'badge-n'}">${pS!==null?pS.toFixed(1)+'/10':'—'}</span></div>
+        <span class="badge ${pS!==null?scoreClass(pS,10):'badge-n'}">${pS!==null?pS+'/10':'—'}</span></div>
       <div class="ind-dim"><span class="ind-dim-name" style="color:var(--saber-c)">SABER</span>
-        <span class="badge ${pSb!==null?scoreClass(pSb,45):'badge-n'}">${pSb!==null?pSb.toFixed(1)+'/45':'—'}</span></div>
+        <span class="badge ${pSb!==null?scoreClass(pSb,45):'badge-n'}">${pSb!==null?pSb+'/45':'—'}</span></div>
       <div class="ind-dim"><span class="ind-dim-name" style="color:var(--hacer-c)">HACER</span>
-        <span class="badge ${pH!==null?scoreClass(pH,40):'badge-n'}">${pH!==null?pH.toFixed(1)+'/40':'—'}</span></div>
+        <span class="badge ${pH!==null?scoreClass(pH,40):'badge-n'}">${pH!==null?pH+'/40':'—'}</span></div>
       <div class="ind-dim" style="margin-top:4px;padding-top:6px;border-top:2px solid var(--border)">
         <span class="ind-dim-name" style="color:var(--dark);font-size:13px">TOTAL</span>
         <span class="badge ${tot!==null?scoreClass(tot,100):'badge-n'}" style="font-size:13px">${tot!==null?tot+'<span style="font-size:14px">/100</span>':'—'}</span></div>
@@ -3109,7 +3131,7 @@ function calcProm(c,trim,idx,dim){
   const vals=((c.grades[trim]||{})[idx]||{})[dim]||[];
   const filled=vals.filter(v=>v!=null);
   if(!filled.length) return null;
-  const raw=filled.reduce((a,b)=>a+b,0)/filled.length; return Math.round(raw*10)/10;
+  return Math.round(filled.reduce((a,b)=>a+b,0)/filled.length);
 }
 function calcTotal(c,trim,idx){
   const pS=calcProm(c,trim,idx,'ser');
