@@ -1670,6 +1670,7 @@ function renderCal(trim){
       <button class="tab" onclick="setCalTab('hacer',${trim},this)">HACER</button>
       <button class="tab" onclick="setCalTab('auto',${trim},this)">AUTO</button>
       <button class="tab" onclick="setCalTab('total',${trim},this)">TOTAL</button>
+      <button class="tab" onclick="setCalTab('estrellas',${trim},this)">⭐ SER</button>
       <button class="tab" onclick="setCalTab('mapa',${trim},this)">🗺</button>
       <button class="tab" onclick="setCalTab('visual',${trim},this)">🎨</button>
     </div>
@@ -1686,6 +1687,7 @@ function setCalTab(dim,trim,btn){
   if(dim==='mapa') renderCalMap(trim);
   else if(dim==='visual') renderVisualGradebook(trim, document.getElementById('cal-content-'+trim));
   else if(dim==='total') renderCalTotal(trim);
+  else if(dim==='estrellas') renderCalEstrellas(trim);
   else renderCalMobile(dim, trim);
 }
 
@@ -1724,12 +1726,22 @@ function renderCalMobile(dim, trim){
 
   // Header con nombres de actividades
   const actHeaders = isAuto
-    ? `<th style="min-width:56px;background:var(--auto-bg);color:var(--auto-c);font-size:11px;padding:8px 4px;text-align:center">Auto<br><span style="font-size:9px;opacity:.7">5pts</span></th>`
+    ? `<th style="min-width:56px;background:var(--auto-bg);color:var(--auto-c);font-size:11px;padding:8px 4px;text-align:center">
+        Auto<br><span style="font-size:9px;opacity:.7">5pts</span><br>
+        <button onclick="autofillAuto(${trim})"
+          style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);
+          border-radius:4px;color:inherit;font-size:9px;padding:1px 5px;cursor:pointer;margin-top:2px"
+          title="Rellenar vacíos">✦</button>
+       </th>`
     : acts.map((a,ai)=>`
         <th style="min-width:52px;background:${cfg.bgColor};color:${cfg.color};
-          font-size:10px;padding:8px 4px;text-align:center;max-width:64px" title="${escH(a)}">
+          font-size:10px;padding:6px 4px;text-align:center;max-width:64px" title="${escH(a)}">
           ${escH(a.length>6?a.slice(0,6)+'…':a)}<br>
-          <span style="font-size:9px;opacity:.7">${cfg.max}p</span>
+          <span style="font-size:9px;opacity:.7">${cfg.max}p</span><br>
+          <button onclick="autofillActiv(${trim},'${dim}',${ai},${cfg.max})"
+            style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);
+            border-radius:4px;color:inherit;font-size:9px;padding:1px 5px;cursor:pointer;
+            margin-top:2px" title="Rellenar vacíos">✦</button>
         </th>`).join('');
 
   // Fila promedio curso
@@ -1762,6 +1774,7 @@ function renderCalMobile(dim, trim){
             color:var(--text);font-family:var(--font)"
             min="0" max="5" value="${g.auto!=null?g.auto:''}" placeholder="—"
             onfocus="this.select()"
+            onkeydown="navEnter(event,this)"
             onchange="setAuto(${trim},${i},this.value);updateMobilePromRow(${trim},'${dim}')">
          </td>`
       : acts.map((_,ai)=>{
@@ -1773,17 +1786,18 @@ function renderCalMobile(dim, trim){
               color:var(--text);font-family:var(--font)"
               min="0" max="${cfg.max}" value="${val!=null?val:''}" placeholder="—"
               onfocus="this.select()"
+              onkeydown="navEnter(event,this)"
               onchange="setGrade(${trim},${i},'${dim}',${ai},this.value);updateMobilePromRow(${trim},'${dim}')">
           </td>`;
         }).join('');
 
     return `<tr style="border-bottom:1px solid var(--border)">
       <td style="padding:8px 10px;min-width:130px;max-width:150px;
-        font-size:12px;font-weight:700;color:var(--dark);
+        font-size:12px;font-weight:700;color:var(--text);
         position:sticky;left:0;background:var(--white);z-index:2;
         border-right:2px solid var(--border)">
         <div style="font-size:10px;color:var(--muted);font-weight:600">${st.nro}</div>
-        <div style="line-height:1.3">${escH(st.nombre.split(' ').slice(0,2).join(' '))}</div>
+        <div style="line-height:1.3;color:var(--text)">${escH(st.nombre.split(' ').slice(0,2).join(' '))}</div>
       </td>
       ${cells}
       <td id="prom-${trim}-${dim}-${i}"
@@ -1862,7 +1876,7 @@ function renderCalTotal(trim){
         position:sticky;left:0;background:var(--white);z-index:2;
         border-right:2px solid var(--border)">
         <div style="font-size:10px;color:var(--muted)">${st.nro}</div>
-        ${escH(st.nombre.split(' ').slice(0,2).join(' '))}
+        <span style="color:var(--text)">${escH(st.nombre.split(' ').slice(0,2).join(' '))}</span>
       </td>
       ${cell(pS,10)}${cell(pSb,45)}${cell(pH,40)}${cell(auto,5)}
       <td style="position:sticky;right:0;text-align:center;font-size:18px;font-weight:800;
@@ -1893,6 +1907,202 @@ function renderCalTotal(trim){
         <tbody>${rows}</tbody>
       </table>
     </div>`;
+}
+
+function navEnter(e, input){
+  if(e.key!=='Enter') return;
+  e.preventDefault();
+  // Disparar el onchange primero
+  input.dispatchEvent(new Event('change'));
+  // Buscar todos los inputs de la tabla actual
+  const table=input.closest('table');
+  if(!table) return;
+  const inputs=[...table.querySelectorAll('input[type="number"]')];
+  const idx=inputs.indexOf(input);
+  // Calcular cuántas columnas hay por fila para saltar a misma columna siguiente fila
+  const row=input.closest('tr');
+  const rowInputs=[...row.querySelectorAll('input[type="number"]')];
+  const colIdx=rowInputs.indexOf(input);
+  const cols=rowInputs.length;
+  // Saltar al mismo input de la siguiente fila
+  const nextIdx=idx+cols;
+  if(nextIdx<inputs.length){
+    inputs[nextIdx].focus();
+    inputs[nextIdx].select();
+    // Scroll suave si está fuera de vista
+    inputs[nextIdx].scrollIntoView({block:'nearest',behavior:'smooth'});
+  }
+}
+
+function autofillActiv(trim, dim, ai, max){
+  const c=getCourse(); if(!c) return;
+  const nota=prompt(`Nota para vacíos en esta actividad (0-${max}):`);
+  if(nota===null||nota==='') return;
+  const val=parseFloat(nota);
+  if(isNaN(val)||val<0||val>max){showToast('Nota inválida','err');return;}
+  let count=0;
+  c.students.forEach((_,i)=>{
+    const g=c.grades[trim][i]||(c.grades[trim][i]={ser:[],saber:[],hacer:[],auto:null});
+    if(!g[dim]) g[dim]=[];
+    if(g[dim][ai]==null){g[dim][ai]=val;count++;}
+  });
+  markChanged();
+  renderCalMobile(dim,trim);
+  showToast(`✦ ${count} casillas rellenadas con ${val}`,'ok');
+}
+
+function autofillAuto(trim){
+  const c=getCourse(); if(!c) return;
+  const nota=prompt('Autoevaluación para vacíos (0-5):');
+  if(nota===null||nota==='') return;
+  const val=parseFloat(nota);
+  if(isNaN(val)||val<0||val>5){showToast('Nota inválida','err');return;}
+  let count=0;
+  c.students.forEach((_,i)=>{
+    const g=c.grades[trim][i]||(c.grades[trim][i]={ser:[],saber:[],hacer:[],auto:null});
+    if(g.auto==null){g.auto=val;count++;}
+  });
+  markChanged();
+  renderCalMobile('auto',trim);
+  showToast(`✦ ${count} casillas rellenadas con ${val}`,'ok');
+}
+
+// ── Vista Estrellas — solo SER (★ = 2pts, máx 5 estrellas = 10pts) ──
+function renderCalEstrellas(trim){
+  const c=getCourse(); if(!c) return;
+  const cont=document.getElementById(`cal-content-${trim}`);
+  const acts=c.activities[trim].ser;
+
+  const starsSVG=(filled)=>{
+    return [1,2,3,4,5].map(n=>`
+      <span style="font-size:26px;cursor:pointer;color:${n<=filled?'#f59e0b':'#d1d5db'};
+        transition:color .15s;-webkit-tap-highlight-color:transparent"
+        onmouseenter="hoverStars(this,${n})"
+        onmouseleave="resetStars(this)">★</span>`
+    ).join('');
+  };
+
+  const rows=c.students.map((st,i)=>{
+    const g=c.grades[trim][i]||(c.grades[trim][i]={ser:[],saber:[],hacer:[],auto:null});
+    const actCells=acts.map((a,ai)=>{
+      const val=(g.ser||[])[ai]??null;
+      const stars=val!==null?Math.round(val/2):0;
+      return `<td style="padding:8px 6px;text-align:center;border-right:1px solid var(--border)">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px">${escH(a.length>8?a.slice(0,8)+'…':a)}</div>
+        <div data-trim="${trim}" data-idx="${i}" data-ai="${ai}" data-stars="${stars}"
+          onclick="tapStar(event,this)"
+          style="display:inline-flex;gap:2px;padding:4px;border-radius:8px;
+          background:var(--s1);border:1px solid var(--border)">
+          ${starsSVG(stars)}
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--ser-c);margin-top:4px">
+          ${val!==null?val+'/10':'—'}
+        </div>
+      </td>`;
+    }).join('');
+
+    const prom=calcProm(c,trim,i,'ser');
+    const promStars=prom!==null?Math.round(prom/2):0;
+    return `<tr style="border-bottom:2px solid var(--border)">
+      <td style="padding:10px;min-width:120px;position:sticky;left:0;
+        background:var(--white);z-index:2;border-right:2px solid var(--border)">
+        <div style="font-size:10px;color:var(--muted)">${st.nro}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--dark)">
+          <span style="color:var(--text)">${escH(st.nombre.split(' ').slice(0,2).join(' '))}</span>
+        </div>
+        <div style="margin-top:4px;font-size:18px;color:#f59e0b">
+          ${'★'.repeat(promStars)}${'☆'.repeat(5-promStars)}
+        </div>
+        <div style="font-size:10px;color:var(--ser-c);font-weight:700">
+          Prom: ${prom!==null?prom.toFixed(1):'—'}/10
+        </div>
+      </td>
+      ${actCells}
+    </tr>`;
+  }).join('');
+
+  cont.innerHTML=`
+    <div style="background:var(--ser-bg);border-radius:8px;padding:10px 14px;margin-bottom:12px;
+      display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:800;color:var(--ser-c);font-size:14px">⭐ SER — Estrellas</div>
+        <div style="font-size:11px;color:var(--muted)">★ = 2 pts · máx 5 estrellas = 10 pts</div>
+      </div>
+      <button onclick="autofillEstrellas(${trim})"
+        style="background:var(--ser-c);color:white;border:none;border-radius:8px;
+        padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">
+        ✦ Rellenar vacíos
+      </button>
+    </div>
+    <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border)">
+      <table style="border-collapse:collapse;width:100%;background:var(--white)">
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">
+      Toca las estrellas para calificar
+    </div>`;
+}
+
+function tapStar(e, container){
+  const spans=[...container.querySelectorAll('span')];
+  const idx=spans.indexOf(e.target);
+  if(idx<0) return;
+  const stars=idx+1;
+  const {trim,idx:si,ai}=container.dataset;
+  const t=parseInt(trim),i=parseInt(si),a=parseInt(ai);
+  const val=stars*2;
+  setGrade(t,i,'ser',a,val);
+  container.dataset.stars=stars;
+  spans.forEach((sp,n)=>sp.style.color=n<stars?'#f59e0b':'#d1d5db');
+  // Actualizar texto de nota debajo
+  const notaDiv=container.closest('td').querySelector('div:last-child');
+  if(notaDiv) notaDiv.textContent=val+'/10';
+  // Actualizar promedio en columna sticky
+  const c=getCourse(); if(!c) return;
+  const prom=calcProm(c,t,i,'ser');
+  const promStars=prom!==null?Math.round(prom/2):0;
+  const stRow=container.closest('tr');
+  const promDiv=stRow?.querySelector('td:first-child div:nth-child(3)');
+  if(promDiv) promDiv.textContent='★'.repeat(promStars)+'☆'.repeat(5-promStars);
+  const promVal=stRow?.querySelector('td:first-child div:last-child');
+  if(promVal) promVal.textContent='Prom: '+(prom!==null?prom.toFixed(1):'—')+'/10';
+}
+
+function hoverStars(span, n){
+  const container=span.closest('div[data-trim]');
+  if(!container) return;
+  [...container.querySelectorAll('span')].forEach((s,i)=>
+    s.style.color=i<n?'#fbbf24':'#d1d5db');
+}
+
+function resetStars(span){
+  const container=span.closest('div[data-trim]');
+  if(!container) return;
+  const stars=parseInt(container.dataset.stars||0);
+  [...container.querySelectorAll('span')].forEach((s,i)=>
+    s.style.color=i<stars?'#f59e0b':'#d1d5db');
+}
+
+function autofillEstrellas(trim){
+  const c=getCourse(); if(!c) return;
+  const estrellas=prompt('¿Cuántas estrellas para casillas vacías? (1-5):');
+  if(estrellas===null||estrellas==='') return;
+  const stars=parseInt(estrellas);
+  if(isNaN(stars)||stars<1||stars>5){showToast('Ingresa entre 1 y 5 estrellas','err');return;}
+  const val=stars*2;
+  let count=0;
+  const acts=c.activities[trim].ser;
+  c.students.forEach((_,i)=>{
+    const g=c.grades[trim][i]||(c.grades[trim][i]={ser:[],saber:[],hacer:[],auto:null});
+    if(!g.ser) g.ser=[];
+    acts.forEach((_,ai)=>{
+      if(g.ser[ai]==null){g.ser[ai]=val;count++;}
+    });
+  });
+  markChanged();
+  renderCalEstrellas(trim);
+  showToast(`⭐ ${count} casillas → ${stars} estrellas (${val}pts)`,'ok');
 }
 
 function updateMobilePromRow(trim, dim){
