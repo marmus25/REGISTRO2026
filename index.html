@@ -586,10 +586,6 @@ input[type=number]{-moz-appearance:textfield}
         <button class="nav-btn" data-sec="obs1" onclick="nav('obs1',this)"><span class="ni">💬</span>Obs. 1er Trim</button>
         <button class="nav-btn" data-sec="obs2" onclick="nav('obs2',this)"><span class="ni">💬</span>Obs. 2do Trim</button>
         <button class="nav-btn" data-sec="obs3" onclick="nav('obs3',this)"><span class="ni">💬</span>Obs. 3er Trim</button>
-
-        <div class="nav-section">Mapas</div>
-        <button class="nav-btn" data-sec="mapa-att" onclick="nav('mapa-att',this)"><span class="ni">📅</span>Mapa Asistencia</button>
-        <button class="nav-btn" data-sec="mapa-cal" onclick="nav('mapa-cal',this)"><span class="ni">📊</span>Mapa Calificaciones</button>
       </div>
       <div class="sidebar-bottom">
         <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center" onclick="document.getElementById('fi-xlsx-add').click()">+ Agregar curso</button>
@@ -1239,8 +1235,6 @@ function nav(sec,btn){
     cal1:()=>renderCal(1),cal2:()=>renderCal(2),cal3:()=>renderCal(3),
     seg:renderSeguimiento,
     obs1:()=>renderObs(1),obs2:()=>renderObs(2),obs3:()=>renderObs(3),
-    'mapa-att':renderMapaAsistencia,
-    'mapa-cal':renderMapaCalificaciones,
   };
   if(map[sec]) map[sec]();
 }
@@ -1666,138 +1660,258 @@ function renderAttHist(trim){
 function renderCal(trim){
   const c=getCourse(); if(!c) return;
   document.getElementById('main').innerHTML=`
-    <div class="page-header">
-      <div><div class="page-title">📝 Calificaciones — ${TRIM_LABELS[trim]} Trim · ${escH(c.meta.curso)}</div>
-        <div class="page-sub">SER (10) · SABER (45) · HACER (40) · Autoevaluacion (5) · Total (100)</div></div>
+    <div class="page-header" style="margin-bottom:10px;padding-bottom:10px">
+      <div><div class="page-title" style="font-size:15px">📝 Calificaciones — ${TRIM_LABELS[trim]} Trim · ${escH(c.meta.curso)}</div>
+        <div class="page-sub">SER (10) · SABER (45) · HACER (40) · Auto (5)</div></div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-      <div class="tabs" style="margin-bottom:0">
-        <button class="tab active" onclick="setCalTab('todo',${trim},this)">Tabla</button>
-        <button class="tab" onclick="setCalTab('ser',${trim},this)">SER</button>
-        <button class="tab" onclick="setCalTab('saber',${trim},this)">SABER</button>
-        <button class="tab" onclick="setCalTab('hacer',${trim},this)">HACER</button>
-        <button class="tab" onclick="setCalTab('visual',${trim},this)">🎨 Visual</button>
-        <button class="tab" onclick="setCalTab('mapa',${trim},this)">🗺 Mapa</button>
-      </div>
-      <button class="btn btn-outline btn-sm" onclick="openVGBFullscreen(${trim})" title="Pantalla completa">⛶ Pantalla completa</button>
+    <div class="tabs" style="margin-bottom:12px;width:100%">
+      <button class="tab active" onclick="setCalTab('ser',${trim},this)">SER</button>
+      <button class="tab" onclick="setCalTab('saber',${trim},this)">SABER</button>
+      <button class="tab" onclick="setCalTab('hacer',${trim},this)">HACER</button>
+      <button class="tab" onclick="setCalTab('auto',${trim},this)">AUTO</button>
+      <button class="tab" onclick="setCalTab('total',${trim},this)">TOTAL</button>
+      <button class="tab" onclick="setCalTab('mapa',${trim},this)">🗺</button>
+      <button class="tab" onclick="setCalTab('visual',${trim},this)">🎨</button>
     </div>
     <div id="cal-content-${trim}"></div>`;
-  renderCalFull(trim);
+  renderCalMobile('ser', trim);
 }
 
 function setCalTab(dim,trim,btn){
-  btn.closest('.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  if(dim==='todo') renderCalFull(trim);
-  else if(dim==='mapa') renderCalMap(trim);
+  if(btn && btn.closest){
+    const tabs=btn.closest('.tabs');
+    if(tabs) tabs.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  if(dim==='mapa') renderCalMap(trim);
   else if(dim==='visual') renderVisualGradebook(trim, document.getElementById('cal-content-'+trim));
-  else renderCalDim(dim,trim);
+  else if(dim==='total') renderCalTotal(trim);
+  else renderCalMobile(dim, trim);
 }
 
-function renderCalFull(trim){
+// ── Vista móvil tipo iDoceo ──
+function renderCalMobile(dim, trim){
   const c=getCourse(); if(!c) return;
   const cont=document.getElementById(`cal-content-${trim}`);
-  const serActs=c.activities[trim].ser;
-  const sabActs=c.activities[trim].saber;
-  const hacActs=c.activities[trim].hacer;
+  if(!cont) return;
 
-  cont.innerHTML=`<div class="gb-wrap"><table class="gb-table">
-    <thead>
-      <tr>
-        <th rowspan="2" style="background:var(--dark);color:white">#</th>
-        <th rowspan="2" style="background:var(--dark);color:white;text-align:left;min-width:160px">Apellidos y Nombres</th>
-        <th colspan="${serActs.length+1}" class="th-ser">SER — 10 pts</th>
-        <th colspan="${sabActs.length+1}" class="th-saber">SABER — 45 pts</th>
-        <th colspan="${hacActs.length+1}" class="th-hacer">HACER — 40 pts</th>
-        <th rowspan="2" class="th-auto" style="min-width:52px">AUTO<br>5pts</th>
-        <th rowspan="2" class="th-prom" style="min-width:56px">TOTAL<br>100</th>
-      </tr>
-      <tr>
-        ${serActs.map(n=>`<th class="th-ser" style="max-width:64px;overflow:hidden;text-overflow:ellipsis" title="${escH(n)}">${escH(n)}</th>`).join('')}
-        <th class="th-ser">Prom</th>
-        ${sabActs.map(n=>`<th class="th-saber" style="max-width:64px;overflow:hidden;text-overflow:ellipsis" title="${escH(n)}">${escH(n)}</th>`).join('')}
-        <th class="th-saber">Prom</th>
-        ${hacActs.map(n=>`<th class="th-hacer" style="max-width:64px;overflow:hidden;text-overflow:ellipsis" title="${escH(n)}">${escH(n)}</th>`).join('')}
-        <th class="th-hacer">Prom</th>
-      </tr>
-      <tr class="row-avg">
-        <td colspan="2" style="text-align:right;padding:5px 10px;font-size:11px;color:var(--muted)">Promedio curso →</td>
-        ${serActs.map((_,ai)=>{const avg=avgAct(c,trim,'ser',ai);return`<td>${avg!==null?Math.round(avg):'—'}</td>`}).join('')}
-        <td>${avgDim(c,trim,'ser')!==null?Math.round(avgDim(c,trim,'ser')):'—'}</td>
-        ${sabActs.map((_,ai)=>{const avg=avgAct(c,trim,'saber',ai);return`<td>${avg!==null?Math.round(avg):'—'}</td>`}).join('')}
-        <td>${avgDim(c,trim,'saber')!==null?Math.round(avgDim(c,trim,'saber')):'—'}</td>
-        ${hacActs.map((_,ai)=>{const avg=avgAct(c,trim,'hacer',ai);return`<td>${avg!==null?Math.round(avg):'—'}</td>`}).join('')}
-        <td>${avgDim(c,trim,'hacer')!==null?Math.round(avgDim(c,trim,'hacer')):'—'}</td>
-        <td>—</td>
-        <td style="font-weight:800">${avgTotal(c,trim)!==null?Math.round(avgTotal(c,trim)):'—'}</td>
-      </tr>
-    </thead>
-    <tbody>
-      ${c.students.map((st,i)=>{
-        const g=c.grades[trim][i]||{ser:[],saber:[],hacer:[],auto:null};
-        const pS=calcProm(c,trim,i,'ser'),pSb=calcProm(c,trim,i,'saber'),pH=calcProm(c,trim,i,'hacer');
-        const tot=calcTotal(c,trim,i);
-        return `<tr>
-          <td class="td-nro">${st.nro}</td><td class="td-name">${escH(st.nombre)}</td>
-          ${serActs.map((_,ai)=>`<td class="td-score"><input type="number" class="score-inp" min="0" max="10"
-            value="${(g.ser[ai]!=null)?g.ser[ai]:''}" placeholder="—"
-            onchange="setGrade(${trim},${i},'ser',${ai},this.value)"></td>`).join('')}
-          <td class="td-prom">${pS!==null?`<span class="badge ${scoreClass(pS,10)}">${Math.round(pS)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
-          ${sabActs.map((_,ai)=>`<td class="td-score"><input type="number" class="score-inp" min="0" max="45"
-            value="${(g.saber[ai]!=null)?g.saber[ai]:''}" placeholder="—"
-            onchange="setGrade(${trim},${i},'saber',${ai},this.value)"></td>`).join('')}
-          <td class="td-prom">${pSb!==null?`<span class="badge ${scoreClass(pSb,45)}">${Math.round(pSb)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
-          ${hacActs.map((_,ai)=>`<td class="td-score"><input type="number" class="score-inp" min="0" max="40"
-            value="${(g.hacer[ai]!=null)?g.hacer[ai]:''}" placeholder="—"
-            onchange="setGrade(${trim},${i},'hacer',${ai},this.value)"></td>`).join('')}
-          <td class="td-prom">${pH!==null?`<span class="badge ${scoreClass(pH,40)}">${Math.round(pH)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
-          <td class="td-score"><input type="number" class="score-inp" min="0" max="5"
-            value="${(g.auto!=null)?g.auto:''}" placeholder="—"
-            onchange="setAuto(${trim},${i},this.value)"></td>
-          <td class="td-prom">${tot!==null?`<span class="badge ${scoreClass(tot,100)}" style="font-size:13px">${Math.round(tot)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
-        </tr>`;
-      }).join('')}
-    </tbody>
-  </table></div>`;
+  const isAuto = dim==='auto';
+  const cfg = isAuto
+    ? {label:'AUTOEVALUACIÓN', max:5, color:'var(--auto-c)', bgColor:'var(--auto-bg)'}
+    : {
+        ser:  {label:'SER',   max:10, color:'var(--ser-c)',   bgColor:'var(--ser-bg)'},
+        saber:{label:'SABER', max:45, color:'var(--saber-c)', bgColor:'var(--saber-bg)'},
+        hacer:{label:'HACER', max:40, color:'var(--hacer-c)', bgColor:'var(--hacer-bg)'},
+      }[dim];
+
+  const acts = isAuto ? ['Auto'] : c.activities[trim][dim];
+
+  // Promedio del curso por actividad
+  const avgRow = isAuto
+    ? [c.students.map((_,i)=>(c.grades[trim][i]||{}).auto).filter(v=>v!=null)]
+    : acts.map((_,ai)=>{
+        const vals=c.students.map((_,i)=>((c.grades[trim][i]||{})[dim]||[])[ai]).filter(v=>v!=null);
+        return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+      });
+
+  const getColor=(val,max)=>{
+    if(val===null||val==='') return {bg:'var(--s2)',text:'var(--muted)',border:'var(--border)'};
+    const p=val/max;
+    if(p>=0.7) return {bg:'#dcfce7',text:'#16a34a',border:'#22c55e'};
+    if(p>=0.5) return {bg:'#fef9c3',text:'#ca8a04',border:'#f59e0b'};
+    return {bg:'#fee2e2',text:'#dc2626',border:'#ef4444'};
+  };
+
+  // Header con nombres de actividades
+  const actHeaders = isAuto
+    ? `<th style="min-width:56px;background:var(--auto-bg);color:var(--auto-c);font-size:11px;padding:8px 4px;text-align:center">Auto<br><span style="font-size:9px;opacity:.7">5pts</span></th>`
+    : acts.map((a,ai)=>`
+        <th style="min-width:52px;background:${cfg.bgColor};color:${cfg.color};
+          font-size:10px;padding:8px 4px;text-align:center;max-width:64px" title="${escH(a)}">
+          ${escH(a.length>6?a.slice(0,6)+'…':a)}<br>
+          <span style="font-size:9px;opacity:.7">${cfg.max}p</span>
+        </th>`).join('');
+
+  // Fila promedio curso
+  const avgCells = isAuto ? (()=>{
+    const vals=c.students.map((_,i)=>(c.grades[trim][i]||{}).auto).filter(v=>v!=null);
+    const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+    return `<td style="text-align:center;font-size:12px;font-weight:700;padding:6px 4px">${avg!==null?avg.toFixed(1):'—'}</td>`;
+  })() : acts.map((_,ai)=>{
+    const avg=avgRow[ai];
+    return `<td style="text-align:center;font-size:12px;font-weight:700;padding:6px 4px">${avg!==null?avg.toFixed(1):'—'}</td>`;
+  }).join('');
+
+  // Promedio dim para columna fija derecha
+  const avgDimVal = isAuto ? (()=>{
+    const vals=c.students.map((_,i)=>(c.grades[trim][i]||{}).auto).filter(v=>v!=null);
+    return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+  })() : avgDim(c,trim,dim);
+
+  // Filas de estudiantes
+  const rows = c.students.map((st,i)=>{
+    const g=c.grades[trim][i]||{ser:[],saber:[],hacer:[],auto:null};
+    const prom = isAuto ? g.auto : calcProm(c,trim,i,dim);
+    const pc=getColor(prom, cfg.max);
+
+    const cells = isAuto
+      ? `<td style="padding:4px 3px;text-align:center">
+          <input type="number" inputmode="numeric" pattern="[0-9]*"
+            style="width:48px;height:40px;border:2px solid var(--border);border-radius:6px;
+            text-align:center;font-size:16px;font-weight:700;background:var(--s1);
+            color:var(--text);font-family:var(--font)"
+            min="0" max="5" value="${g.auto!=null?g.auto:''}" placeholder="—"
+            onfocus="this.select()"
+            onchange="setAuto(${trim},${i},this.value);updateMobilePromRow(${trim},'${dim}')">
+         </td>`
+      : acts.map((_,ai)=>{
+          const val=(g[dim]||[])[ai];
+          return `<td style="padding:4px 3px;text-align:center">
+            <input type="number" inputmode="numeric" pattern="[0-9]*"
+              style="width:48px;height:40px;border:2px solid var(--border);border-radius:6px;
+              text-align:center;font-size:16px;font-weight:700;background:var(--s1);
+              color:var(--text);font-family:var(--font)"
+              min="0" max="${cfg.max}" value="${val!=null?val:''}" placeholder="—"
+              onfocus="this.select()"
+              onchange="setGrade(${trim},${i},'${dim}',${ai},this.value);updateMobilePromRow(${trim},'${dim}')">
+          </td>`;
+        }).join('');
+
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:8px 10px;min-width:130px;max-width:150px;
+        font-size:12px;font-weight:700;color:var(--dark);
+        position:sticky;left:0;background:var(--white);z-index:2;
+        border-right:2px solid var(--border)">
+        <div style="font-size:10px;color:var(--muted);font-weight:600">${st.nro}</div>
+        <div style="line-height:1.3">${escH(st.nombre.split(' ').slice(0,2).join(' '))}</div>
+      </td>
+      ${cells}
+      <td id="prom-${trim}-${dim}-${i}"
+        style="position:sticky;right:0;min-width:52px;text-align:center;
+        background:${pc.bg};color:${pc.text};border-left:2px solid ${pc.border};
+        font-size:16px;font-weight:800;padding:4px 6px;z-index:2">
+        ${prom!==null?prom.toFixed(1):'—'}
+      </td>
+    </tr>`;
+  }).join('');
+
+  const avgDimColor=getColor(avgDimVal,cfg.max);
+
+  cont.innerHTML=`
+    <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);background:var(--white)">
+      <table style="border-collapse:collapse;width:100%">
+        <thead>
+          <tr style="background:var(--s1)">
+            <th style="position:sticky;left:0;background:var(--dark);color:white;
+              padding:10px;text-align:left;min-width:130px;z-index:3;font-size:12px;
+              border-right:2px solid var(--border)">
+              ${cfg.label}
+            </th>
+            ${actHeaders}
+            <th style="position:sticky;right:0;background:${cfg.bgColor};color:${cfg.color};
+              min-width:52px;text-align:center;font-size:11px;font-weight:800;padding:8px 4px;
+              border-left:2px solid ${cfg.color};z-index:3">
+              PROM
+            </th>
+          </tr>
+          <tr style="background:#f8f9fa;border-bottom:2px solid var(--border)" id="avg-row-${trim}-${dim}">
+            <td style="position:sticky;left:0;background:#f8f9fa;padding:6px 10px;
+              font-size:11px;color:var(--muted);font-weight:700;border-right:2px solid var(--border);z-index:2">
+              Prom. clase
+            </td>
+            ${avgCells}
+            <td style="position:sticky;right:0;text-align:center;font-size:13px;font-weight:800;
+              background:${avgDimColor.bg};color:${avgDimColor.text};
+              border-left:2px solid ${avgDimColor.border};padding:6px 4px;z-index:2">
+              ${avgDimVal!==null?avgDimVal.toFixed(1):'—'}
+            </td>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
 }
 
-function renderCalDim(dim,trim){
+function renderCalTotal(trim){
   const c=getCourse(); if(!c) return;
   const cont=document.getElementById(`cal-content-${trim}`);
-  const cfg=COL_MAP[dim];
-  const acts=c.activities[trim][dim];
-  const color=dim==='ser'?'var(--ser-c)':dim==='saber'?'var(--saber-c)':'var(--hacer-c)';
-  const thClass=dim==='ser'?'th-ser':dim==='saber'?'th-saber':'th-hacer';
 
-  cont.innerHTML=`<div class="gb-wrap"><table class="gb-table">
-    <thead>
-      <tr>
-        <th rowspan="2" style="background:var(--dark);color:white">#</th>
-        <th rowspan="2" style="background:var(--dark);color:white;text-align:left;min-width:160px">Estudiante</th>
-        <th colspan="${acts.length}" class="${thClass}">${cfg.label} — ${cfg.max} pts</th>
-        <th rowspan="2" class="${thClass}">Promedio</th>
-      </tr>
-      <tr>${acts.map(n=>`<th class="${thClass}" title="${escH(n)}">${escH(n)}</th>`).join('')}</tr>
-      <tr class="row-avg">
-        <td colspan="2" style="text-align:right;padding:5px 10px;font-size:11px;color:var(--muted)">Promedio curso →</td>
-        ${acts.map((_,ai)=>{const avg=avgAct(c,trim,dim,ai);return`<td>${avg!==null?Math.round(avg):'—'}</td>`}).join('')}
-        <td>${avgDim(c,trim,dim)!==null?Math.round(avgDim(c,trim,dim)):'—'}</td>
-      </tr>
-    </thead>
-    <tbody>
-      ${c.students.map((st,i)=>{
-        const g=c.grades[trim][i]||{ser:[],saber:[],hacer:[]};
-        const prom=calcProm(c,trim,i,dim);
-        return `<tr>
-          <td class="td-nro">${st.nro}</td><td class="td-name">${escH(st.nombre)}</td>
-          ${acts.map((_,ai)=>`<td class="td-score"><input type="number" class="score-inp" min="0" max="${cfg.max}"
-            value="${(g[dim][ai]!=null)?g[dim][ai]:''}" placeholder="—"
-            onchange="setGrade(${trim},${i},'${dim}',${ai},this.value)"></td>`).join('')}
-          <td class="td-prom">${prom!==null?`<span class="badge ${scoreClass(prom,cfg.max)}">${Math.round(prom)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
-        </tr>`;
-      }).join('')}
-    </tbody>
-  </table></div>`;
+  const getColor=(val,max)=>{
+    if(val===null) return {bg:'var(--s2)',text:'var(--muted)',border:'var(--border)'};
+    const p=val/max;
+    if(p>=0.7) return {bg:'#dcfce7',text:'#16a34a',border:'#22c55e'};
+    if(p>=0.5) return {bg:'#fef9c3',text:'#ca8a04',border:'#f59e0b'};
+    return {bg:'#fee2e2',text:'#dc2626',border:'#ef4444'};
+  };
+
+  const rows=c.students.map((st,i)=>{
+    const pS=calcProm(c,trim,i,'ser');
+    const pSb=calcProm(c,trim,i,'saber');
+    const pH=calcProm(c,trim,i,'hacer');
+    const auto=(c.grades[trim][i]||{}).auto;
+    const tot=calcTotal(c,trim,i);
+    const cT=getColor(tot,100);
+    const cell=(val,max)=>{
+      const cc=getColor(val,max);
+      return `<td style="text-align:center;padding:6px 4px;font-size:14px;font-weight:700;
+        background:${cc.bg};color:${cc.text};border:1px solid var(--border)">
+        ${val!==null?val.toFixed(1):'—'}</td>`;
+    };
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:8px 10px;min-width:130px;font-size:12px;font-weight:700;
+        position:sticky;left:0;background:var(--white);z-index:2;
+        border-right:2px solid var(--border)">
+        <div style="font-size:10px;color:var(--muted)">${st.nro}</div>
+        ${escH(st.nombre.split(' ').slice(0,2).join(' '))}
+      </td>
+      ${cell(pS,10)}${cell(pSb,45)}${cell(pH,40)}${cell(auto,5)}
+      <td style="position:sticky;right:0;text-align:center;font-size:18px;font-weight:800;
+        background:${cT.bg};color:${cT.text};border-left:2px solid ${cT.border};
+        padding:6px 8px;z-index:2;min-width:56px">
+        ${tot!==null?Math.round(tot):'—'}
+      </td>
+    </tr>`;
+  }).join('');
+
+  cont.innerHTML=`
+    <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);background:var(--white)">
+      <table style="border-collapse:collapse;width:100%">
+        <thead>
+          <tr>
+            <th style="position:sticky;left:0;background:var(--dark);color:white;
+              padding:10px;text-align:left;min-width:130px;z-index:3;font-size:12px;
+              border-right:2px solid var(--border)">RESUMEN</th>
+            <th style="background:var(--ser-bg);color:var(--ser-c);padding:8px 6px;text-align:center;font-size:11px">SER<br>/10</th>
+            <th style="background:var(--saber-bg);color:var(--saber-c);padding:8px 6px;text-align:center;font-size:11px">SABER<br>/45</th>
+            <th style="background:var(--hacer-bg);color:var(--hacer-c);padding:8px 6px;text-align:center;font-size:11px">HACER<br>/40</th>
+            <th style="background:var(--auto-bg);color:var(--auto-c);padding:8px 6px;text-align:center;font-size:11px">AUTO<br>/5</th>
+            <th style="position:sticky;right:0;background:var(--dark);color:white;
+              padding:8px 6px;text-align:center;font-size:11px;z-index:3;
+              border-left:2px solid var(--border)">TOTAL<br>/100</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function updateMobilePromRow(trim, dim){
+  const c=getCourse(); if(!c) return;
+  // Actualizar promedios individuales en tiempo real
+  c.students.forEach((_,i)=>{
+    const isAuto=dim==='auto';
+    const g=c.grades[trim][i]||{};
+    const prom=isAuto?g.auto:calcProm(c,trim,i,dim);
+    const max=isAuto?5:{ser:10,saber:45,hacer:40}[dim];
+    const cell=document.getElementById(`prom-${trim}-${dim}-${i}`);
+    if(!cell) return;
+    const p=prom!==null?prom/max:null;
+    if(p===null){cell.style.background='var(--s2)';cell.style.color='var(--muted)';cell.textContent='—';return;}
+    if(p>=0.7){cell.style.background='#dcfce7';cell.style.color='#16a34a';}
+    else if(p>=0.5){cell.style.background='#fef9c3';cell.style.color='#ca8a04';}
+    else{cell.style.background='#fee2e2';cell.style.color='#dc2626';}
+    cell.textContent=prom.toFixed(1);
+  });
 }
 
 function renderCalMap(trim){
@@ -2906,256 +3020,6 @@ function getCellVal(ws,row,col){
   if(!cell) return null;
   return cell.v!==undefined?cell.v:cell.w;
 }
-// ════════════════════════════════════════════════
-// MAPA ASISTENCIA — por fecha
-// ════════════════════════════════════════════════
-function renderMapaAsistencia(){
-  const c=getCourse(); if(!c) return;
-  const main=document.getElementById('main');
-  main.innerHTML=`
-    <div class="page-header">
-      <div><div class="page-title">📅 Mapa de Asistencia · ${escH(c.meta.curso)}</div>
-        <div class="page-sub">Selecciona trimestre y fecha para ver el mapa del salón</div></div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
-      <div class="tabs" style="margin-bottom:0">
-        <button class="tab active" onclick="setMapaAttTrim(1,this)">1er Trim</button>
-        <button class="tab" onclick="setMapaAttTrim(2,this)">2do Trim</button>
-        <button class="tab" onclick="setMapaAttTrim(3,this)">3er Trim</button>
-      </div>
-    </div>
-    <div id="mapa-att-content"></div>`;
-  renderMapaAttContenido(1);
-}
-
-function setMapaAttTrim(trim,btn){
-  btn.closest('.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderMapaAttContenido(trim);
-}
-
-function renderMapaAttContenido(trim){
-  const c=getCourse(); if(!c) return;
-  const cont=document.getElementById('mapa-att-content');
-  const dates=Object.keys(c.attendance[trim])
-    .filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort().reverse();
-
-  if(!dates.length){
-    cont.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Sin fechas registradas en este trimestre</div>';
-    return;
-  }
-
-  // Selector de fechas como chips
-  const firstDate=dates[0];
-  cont.innerHTML=`
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
-      ${dates.map((d,idx)=>`
-        <button onclick="showMapaAttFecha(${trim},'${d}',this)"
-          class="btn btn-sm ${idx===0?'btn-blue':'btn-outline'}"
-          style="font-size:11px;padding:4px 10px">
-          ${d.slice(5).replace('-','/')}
-        </button>`).join('')}
-    </div>
-    <div id="mapa-att-salón"></div>`;
-  showMapaAttFecha(trim, firstDate, cont.querySelector('.btn-blue'));
-}
-
-function showMapaAttFecha(trim, date, btn){
-  // Resaltar botón activo
-  if(btn){
-    btn.closest('div').querySelectorAll('button').forEach(b=>{
-      b.classList.remove('btn-blue'); b.classList.add('btn-outline');
-    });
-    btn.classList.remove('btn-outline'); btn.classList.add('btn-blue');
-  }
-  const c=getCourse(); if(!c) return;
-  const cont=document.getElementById('mapa-att-salón');
-  const att=c.attendance[trim][date]||{};
-
-  const seats=c.students.map((st,i)=>{
-    const val=att[i]||'';
-    const ap=st.nombre.split(' ')[0];
-    const bgMap={'P':'var(--green-l)','F':'var(--red-l)','L':'var(--yellow-l)','R':'var(--blue-l)'};
-    const bcMap={'P':'var(--green)','F':'var(--red)','L':'var(--yellow)','R':'var(--blue)'};
-    const bg=bgMap[val]||'var(--s1)';
-    const bc=bcMap[val]||'var(--border)';
-    return `<div style="border-radius:8px;border:2px solid ${bc};background:${bg};
-      padding:8px 4px;text-align:center;min-height:66px;display:flex;flex-direction:column;align-items:center">
-      <div style="font-size:9px;color:var(--muted);font-weight:600">${st.nro}</div>
-      <div style="font-size:11px;font-weight:700;color:var(--dark);line-height:1.2;margin:2px 0">${escH(ap)}</div>
-      <div style="font-size:14px;font-weight:800;color:${bcMap[val]||'var(--muted)'}">${val||'·'}</div>
-    </div>`;
-  }).join('');
-
-  // Conteo
-  const total=c.students.length;
-  const pres=Object.values(att).filter(v=>v==='P').length;
-  const falt=Object.values(att).filter(v=>v==='F').length;
-  const lic=Object.values(att).filter(v=>v==='L').length;
-  const ret=Object.values(att).filter(v=>v==='R').length;
-
-  cont.innerHTML=`
-    <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
-      <span style="font-size:12px;font-weight:700;color:var(--green)">✅ P: ${pres}</span>
-      <span style="font-size:12px;font-weight:700;color:var(--red)">❌ F: ${falt}</span>
-      <span style="font-size:12px;font-weight:700;color:var(--yellow)">📋 L: ${lic}</span>
-      <span style="font-size:12px;font-weight:700;color:var(--blue)">⏰ R: ${ret}</span>
-      <span style="font-size:12px;color:var(--muted)">Total: ${total}</span>
-    </div>
-    <div class="board-sign">PIZARRÓN — ${date}</div>
-    <div class="seat-map">${seats}</div>`;
-}
-
-// ════════════════════════════════════════════════
-// MAPA CALIFICACIONES — por actividad
-// ════════════════════════════════════════════════
-function renderMapaCalificaciones(){
-  const c=getCourse(); if(!c) return;
-  const main=document.getElementById('main');
-  main.innerHTML=`
-    <div class="page-header">
-      <div><div class="page-title">📊 Mapa de Calificaciones · ${escH(c.meta.curso)}</div>
-        <div class="page-sub">Selecciona trimestre, dimensión y actividad</div></div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
-      <div class="tabs" style="margin-bottom:0">
-        <button class="tab active" onclick="setMapaCalTrim(1,this)">1er Trim</button>
-        <button class="tab" onclick="setMapaCalTrim(2,this)">2do Trim</button>
-        <button class="tab" onclick="setMapaCalTrim(3,this)">3er Trim</button>
-      </div>
-    </div>
-    <div id="mapa-cal-content"></div>`;
-  renderMapaCalContenido(1);
-}
-
-function setMapaCalTrim(trim,btn){
-  btn.closest('.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderMapaCalContenido(trim);
-}
-
-function renderMapaCalContenido(trim){
-  const c=getCourse(); if(!c) return;
-  const cont=document.getElementById('mapa-cal-content');
-
-  // Construir lista de todas las actividades con notas
-  const dims=[
-    {key:'ser', label:'SER', max:10, color:'var(--ser-c)', acts:c.activities[trim].ser},
-    {key:'saber', label:'SABER', max:45, color:'var(--saber-c)', acts:c.activities[trim].saber},
-    {key:'hacer', label:'HACER', max:40, color:'var(--hacer-c)', acts:c.activities[trim].hacer},
-  ];
-
-  // Tabs de dimensión + actividades
-  cont.innerHTML=`
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
-      <div class="tabs" style="margin-bottom:0" id="dim-tabs-${trim}">
-        <button class="tab active" onclick="setMapaCalDim(${trim},'ser',this)">SER</button>
-        <button class="tab" onclick="setMapaCalDim(${trim},'saber',this)">SABER</button>
-        <button class="tab" onclick="setMapaCalDim(${trim},'hacer',this)">HACER</button>
-        <button class="tab" onclick="setMapaCalDim(${trim},'total',this)">TOTAL</button>
-      </div>
-    </div>
-    <div id="mapa-cal-acts-${trim}" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
-    <div id="mapa-cal-salón-${trim}"></div>`;
-
-  setMapaCalDim(trim,'ser', cont.querySelector('.tab.active'));
-}
-
-function setMapaCalDim(trim, dim, btn){
-  if(btn){
-    btn.closest('.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-  }
-  const c=getCourse(); if(!c) return;
-  const actsCont=document.getElementById(`mapa-cal-acts-${trim}`);
-  const salonCont=document.getElementById(`mapa-cal-salón-${trim}`);
-
-  if(dim==='total'){
-    actsCont.innerHTML='';
-    showMapaCalActividad(trim,'total',0,'TOTAL',100,'var(--dark)');
-    return;
-  }
-
-  const dimCfg={
-    ser:{max:10,color:'var(--ser-c)'},
-    saber:{max:45,color:'var(--saber-c)'},
-    hacer:{max:40,color:'var(--hacer-c)'}
-  };
-  const acts=c.activities[trim][dim];
-  const cfg=dimCfg[dim];
-
-  // Botón promedio + botones por actividad
-  actsCont.innerHTML=`
-    <button onclick="showMapaCalActividad(${trim},'${dim}',-1,'Promedio ${dim.toUpperCase()}',${cfg.max},'${cfg.color}',this)"
-      class="btn btn-sm btn-blue" style="font-size:11px">Promedio</button>
-    ${acts.map((a,ai)=>`
-      <button onclick="showMapaCalActividad(${trim},'${dim}',${ai},'${escH(a)}',${cfg.max},'${cfg.color}',this)"
-        class="btn btn-sm btn-outline" style="font-size:11px">${escH(a)}</button>`).join('')}`;
-
-  // Mostrar promedio por defecto
-  showMapaCalActividad(trim, dim, -1, `Promedio ${dim.toUpperCase()}`, cfg.max, cfg.color,
-    actsCont.querySelector('.btn-blue'));
-}
-
-function showMapaCalActividad(trim, dim, actIdx, label, max, color, btn){
-  if(btn){
-    const parent=btn.closest('div');
-    if(parent){
-      parent.querySelectorAll('button').forEach(b=>{
-        b.classList.remove('btn-blue'); b.classList.add('btn-outline');
-      });
-      btn.classList.remove('btn-outline'); btn.classList.add('btn-blue');
-    }
-  }
-  const c=getCourse(); if(!c) return;
-  const cont=document.getElementById(`mapa-cal-salón-${trim}`);
-
-  const getVal=(i)=>{
-    if(dim==='total') return calcTotal(c,trim,i);
-    const g=(c.grades[trim]||{})[i]||{};
-    if(actIdx===-1) return calcProm(c,trim,i,dim);
-    return (g[dim]||[])[actIdx]??null;
-  };
-
-  const seats=c.students.map((st,i)=>{
-    const val=getVal(i);
-    const pct=val!==null?val/max:null;
-    const bc=pct===null?'var(--border)':pct>=0.7?'var(--green)':pct>=0.5?'var(--yellow)':'var(--red)';
-    const bg=pct===null?'var(--s1)':pct>=0.7?'var(--green-l)':pct>=0.5?'var(--yellow-l)':'var(--red-l)';
-    const vc=pct===null?'var(--muted)':pct>=0.7?'var(--green)':pct>=0.5?'var(--yellow)':'var(--red)';
-    const ap=st.nombre.split(' ')[0];
-    const display=val!==null?(Number.isInteger(val)?val:val.toFixed(1)):'—';
-    return `<div style="border-radius:8px;border:2px solid ${bc};background:${bg};
-      padding:8px 4px;text-align:center;min-height:66px;display:flex;flex-direction:column;align-items:center">
-      <div style="font-size:9px;color:var(--muted);font-weight:600">${st.nro}</div>
-      <div style="font-size:10px;font-weight:700;color:var(--dark);line-height:1.2;margin:2px 0">${escH(ap)}</div>
-      <div style="font-size:15px;font-weight:800;color:${vc}">${display}</div>
-    </div>`;
-  }).join('');
-
-  // Estadísticas rápidas
-  const vals=c.students.map((_,i)=>getVal(i)).filter(v=>v!==null);
-  const promedio=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
-  const altos=vals.filter(v=>v/max>=0.7).length;
-  const medios=vals.filter(v=>v/max>=0.5&&v/max<0.7).length;
-  const bajos=vals.filter(v=>v/max<0.5).length;
-
-  cont.innerHTML=`
-    <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
-      <span style="font-size:12px;font-weight:700;color:var(--green)">≥70%: ${altos}</span>
-      <span style="font-size:12px;font-weight:700;color:var(--yellow)">50-70%: ${medios}</span>
-      <span style="font-size:12px;font-weight:700;color:var(--red)"><50%: ${bajos}</span>
-      ${promedio!==null?`<span style="font-size:12px;font-weight:700;color:var(--muted)">Prom: ${promedio.toFixed(1)}</span>`:''}
-    </div>
-    <div class="board-sign" style="background:${color}">${label} — max ${max} pts</div>
-    <div class="seat-map">${seats}</div>
-    <div style="display:flex;gap:14px;justify-content:center;margin-top:10px" class="legend">
-      <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>≥70%</div>
-      <div class="leg"><div class="leg-dot" style="background:var(--yellow)"></div>50-70%</div>
-      <div class="leg"><div class="leg-dot" style="background:var(--red)"></div>&lt;50%</div>
-    </div>`;
-}
-
 function escH(str){
   return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
