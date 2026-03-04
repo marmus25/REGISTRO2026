@@ -586,6 +586,10 @@ input[type=number]{-moz-appearance:textfield}
         <button class="nav-btn" data-sec="obs1" onclick="nav('obs1',this)"><span class="ni">💬</span>Obs. 1er Trim</button>
         <button class="nav-btn" data-sec="obs2" onclick="nav('obs2',this)"><span class="ni">💬</span>Obs. 2do Trim</button>
         <button class="nav-btn" data-sec="obs3" onclick="nav('obs3',this)"><span class="ni">💬</span>Obs. 3er Trim</button>
+
+        <div class="nav-section">Mapas</div>
+        <button class="nav-btn" data-sec="mapa-att" onclick="nav('mapa-att',this)"><span class="ni">📅</span>Mapa Asistencia</button>
+        <button class="nav-btn" data-sec="mapa-cal" onclick="nav('mapa-cal',this)"><span class="ni">📊</span>Mapa Calificaciones</button>
       </div>
       <div class="sidebar-bottom">
         <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center" onclick="document.getElementById('fi-xlsx-add').click()">+ Agregar curso</button>
@@ -1235,6 +1239,8 @@ function nav(sec,btn){
     cal1:()=>renderCal(1),cal2:()=>renderCal(2),cal3:()=>renderCal(3),
     seg:renderSeguimiento,
     obs1:()=>renderObs(1),obs2:()=>renderObs(2),obs3:()=>renderObs(3),
+    'mapa-att':renderMapaAsistencia,
+    'mapa-cal':renderMapaCalificaciones,
   };
   if(map[sec]) map[sec]();
 }
@@ -2900,6 +2906,256 @@ function getCellVal(ws,row,col){
   if(!cell) return null;
   return cell.v!==undefined?cell.v:cell.w;
 }
+// ════════════════════════════════════════════════
+// MAPA ASISTENCIA — por fecha
+// ════════════════════════════════════════════════
+function renderMapaAsistencia(){
+  const c=getCourse(); if(!c) return;
+  const main=document.getElementById('main');
+  main.innerHTML=`
+    <div class="page-header">
+      <div><div class="page-title">📅 Mapa de Asistencia · ${escH(c.meta.curso)}</div>
+        <div class="page-sub">Selecciona trimestre y fecha para ver el mapa del salón</div></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+      <div class="tabs" style="margin-bottom:0">
+        <button class="tab active" onclick="setMapaAttTrim(1,this)">1er Trim</button>
+        <button class="tab" onclick="setMapaAttTrim(2,this)">2do Trim</button>
+        <button class="tab" onclick="setMapaAttTrim(3,this)">3er Trim</button>
+      </div>
+    </div>
+    <div id="mapa-att-content"></div>`;
+  renderMapaAttContenido(1);
+}
+
+function setMapaAttTrim(trim,btn){
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMapaAttContenido(trim);
+}
+
+function renderMapaAttContenido(trim){
+  const c=getCourse(); if(!c) return;
+  const cont=document.getElementById('mapa-att-content');
+  const dates=Object.keys(c.attendance[trim])
+    .filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort().reverse();
+
+  if(!dates.length){
+    cont.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Sin fechas registradas en este trimestre</div>';
+    return;
+  }
+
+  // Selector de fechas como chips
+  const firstDate=dates[0];
+  cont.innerHTML=`
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+      ${dates.map((d,idx)=>`
+        <button onclick="showMapaAttFecha(${trim},'${d}',this)"
+          class="btn btn-sm ${idx===0?'btn-blue':'btn-outline'}"
+          style="font-size:11px;padding:4px 10px">
+          ${d.slice(5).replace('-','/')}
+        </button>`).join('')}
+    </div>
+    <div id="mapa-att-salón"></div>`;
+  showMapaAttFecha(trim, firstDate, cont.querySelector('.btn-blue'));
+}
+
+function showMapaAttFecha(trim, date, btn){
+  // Resaltar botón activo
+  if(btn){
+    btn.closest('div').querySelectorAll('button').forEach(b=>{
+      b.classList.remove('btn-blue'); b.classList.add('btn-outline');
+    });
+    btn.classList.remove('btn-outline'); btn.classList.add('btn-blue');
+  }
+  const c=getCourse(); if(!c) return;
+  const cont=document.getElementById('mapa-att-salón');
+  const att=c.attendance[trim][date]||{};
+
+  const seats=c.students.map((st,i)=>{
+    const val=att[i]||'';
+    const ap=st.nombre.split(' ')[0];
+    const bgMap={'P':'var(--green-l)','F':'var(--red-l)','L':'var(--yellow-l)','R':'var(--blue-l)'};
+    const bcMap={'P':'var(--green)','F':'var(--red)','L':'var(--yellow)','R':'var(--blue)'};
+    const bg=bgMap[val]||'var(--s1)';
+    const bc=bcMap[val]||'var(--border)';
+    return `<div style="border-radius:8px;border:2px solid ${bc};background:${bg};
+      padding:8px 4px;text-align:center;min-height:66px;display:flex;flex-direction:column;align-items:center">
+      <div style="font-size:9px;color:var(--muted);font-weight:600">${st.nro}</div>
+      <div style="font-size:11px;font-weight:700;color:var(--dark);line-height:1.2;margin:2px 0">${escH(ap)}</div>
+      <div style="font-size:14px;font-weight:800;color:${bcMap[val]||'var(--muted)'}">${val||'·'}</div>
+    </div>`;
+  }).join('');
+
+  // Conteo
+  const total=c.students.length;
+  const pres=Object.values(att).filter(v=>v==='P').length;
+  const falt=Object.values(att).filter(v=>v==='F').length;
+  const lic=Object.values(att).filter(v=>v==='L').length;
+  const ret=Object.values(att).filter(v=>v==='R').length;
+
+  cont.innerHTML=`
+    <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+      <span style="font-size:12px;font-weight:700;color:var(--green)">✅ P: ${pres}</span>
+      <span style="font-size:12px;font-weight:700;color:var(--red)">❌ F: ${falt}</span>
+      <span style="font-size:12px;font-weight:700;color:var(--yellow)">📋 L: ${lic}</span>
+      <span style="font-size:12px;font-weight:700;color:var(--blue)">⏰ R: ${ret}</span>
+      <span style="font-size:12px;color:var(--muted)">Total: ${total}</span>
+    </div>
+    <div class="board-sign">PIZARRÓN — ${date}</div>
+    <div class="seat-map">${seats}</div>`;
+}
+
+// ════════════════════════════════════════════════
+// MAPA CALIFICACIONES — por actividad
+// ════════════════════════════════════════════════
+function renderMapaCalificaciones(){
+  const c=getCourse(); if(!c) return;
+  const main=document.getElementById('main');
+  main.innerHTML=`
+    <div class="page-header">
+      <div><div class="page-title">📊 Mapa de Calificaciones · ${escH(c.meta.curso)}</div>
+        <div class="page-sub">Selecciona trimestre, dimensión y actividad</div></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+      <div class="tabs" style="margin-bottom:0">
+        <button class="tab active" onclick="setMapaCalTrim(1,this)">1er Trim</button>
+        <button class="tab" onclick="setMapaCalTrim(2,this)">2do Trim</button>
+        <button class="tab" onclick="setMapaCalTrim(3,this)">3er Trim</button>
+      </div>
+    </div>
+    <div id="mapa-cal-content"></div>`;
+  renderMapaCalContenido(1);
+}
+
+function setMapaCalTrim(trim,btn){
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMapaCalContenido(trim);
+}
+
+function renderMapaCalContenido(trim){
+  const c=getCourse(); if(!c) return;
+  const cont=document.getElementById('mapa-cal-content');
+
+  // Construir lista de todas las actividades con notas
+  const dims=[
+    {key:'ser', label:'SER', max:10, color:'var(--ser-c)', acts:c.activities[trim].ser},
+    {key:'saber', label:'SABER', max:45, color:'var(--saber-c)', acts:c.activities[trim].saber},
+    {key:'hacer', label:'HACER', max:40, color:'var(--hacer-c)', acts:c.activities[trim].hacer},
+  ];
+
+  // Tabs de dimensión + actividades
+  cont.innerHTML=`
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+      <div class="tabs" style="margin-bottom:0" id="dim-tabs-${trim}">
+        <button class="tab active" onclick="setMapaCalDim(${trim},'ser',this)">SER</button>
+        <button class="tab" onclick="setMapaCalDim(${trim},'saber',this)">SABER</button>
+        <button class="tab" onclick="setMapaCalDim(${trim},'hacer',this)">HACER</button>
+        <button class="tab" onclick="setMapaCalDim(${trim},'total',this)">TOTAL</button>
+      </div>
+    </div>
+    <div id="mapa-cal-acts-${trim}" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
+    <div id="mapa-cal-salón-${trim}"></div>`;
+
+  setMapaCalDim(trim,'ser', cont.querySelector('.tab.active'));
+}
+
+function setMapaCalDim(trim, dim, btn){
+  if(btn){
+    btn.closest('.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  const c=getCourse(); if(!c) return;
+  const actsCont=document.getElementById(`mapa-cal-acts-${trim}`);
+  const salonCont=document.getElementById(`mapa-cal-salón-${trim}`);
+
+  if(dim==='total'){
+    actsCont.innerHTML='';
+    showMapaCalActividad(trim,'total',0,'TOTAL',100,'var(--dark)');
+    return;
+  }
+
+  const dimCfg={
+    ser:{max:10,color:'var(--ser-c)'},
+    saber:{max:45,color:'var(--saber-c)'},
+    hacer:{max:40,color:'var(--hacer-c)'}
+  };
+  const acts=c.activities[trim][dim];
+  const cfg=dimCfg[dim];
+
+  // Botón promedio + botones por actividad
+  actsCont.innerHTML=`
+    <button onclick="showMapaCalActividad(${trim},'${dim}',-1,'Promedio ${dim.toUpperCase()}',${cfg.max},'${cfg.color}',this)"
+      class="btn btn-sm btn-blue" style="font-size:11px">Promedio</button>
+    ${acts.map((a,ai)=>`
+      <button onclick="showMapaCalActividad(${trim},'${dim}',${ai},'${escH(a)}',${cfg.max},'${cfg.color}',this)"
+        class="btn btn-sm btn-outline" style="font-size:11px">${escH(a)}</button>`).join('')}`;
+
+  // Mostrar promedio por defecto
+  showMapaCalActividad(trim, dim, -1, `Promedio ${dim.toUpperCase()}`, cfg.max, cfg.color,
+    actsCont.querySelector('.btn-blue'));
+}
+
+function showMapaCalActividad(trim, dim, actIdx, label, max, color, btn){
+  if(btn){
+    const parent=btn.closest('div');
+    if(parent){
+      parent.querySelectorAll('button').forEach(b=>{
+        b.classList.remove('btn-blue'); b.classList.add('btn-outline');
+      });
+      btn.classList.remove('btn-outline'); btn.classList.add('btn-blue');
+    }
+  }
+  const c=getCourse(); if(!c) return;
+  const cont=document.getElementById(`mapa-cal-salón-${trim}`);
+
+  const getVal=(i)=>{
+    if(dim==='total') return calcTotal(c,trim,i);
+    const g=(c.grades[trim]||{})[i]||{};
+    if(actIdx===-1) return calcProm(c,trim,i,dim);
+    return (g[dim]||[])[actIdx]??null;
+  };
+
+  const seats=c.students.map((st,i)=>{
+    const val=getVal(i);
+    const pct=val!==null?val/max:null;
+    const bc=pct===null?'var(--border)':pct>=0.7?'var(--green)':pct>=0.5?'var(--yellow)':'var(--red)';
+    const bg=pct===null?'var(--s1)':pct>=0.7?'var(--green-l)':pct>=0.5?'var(--yellow-l)':'var(--red-l)';
+    const vc=pct===null?'var(--muted)':pct>=0.7?'var(--green)':pct>=0.5?'var(--yellow)':'var(--red)';
+    const ap=st.nombre.split(' ')[0];
+    const display=val!==null?(Number.isInteger(val)?val:val.toFixed(1)):'—';
+    return `<div style="border-radius:8px;border:2px solid ${bc};background:${bg};
+      padding:8px 4px;text-align:center;min-height:66px;display:flex;flex-direction:column;align-items:center">
+      <div style="font-size:9px;color:var(--muted);font-weight:600">${st.nro}</div>
+      <div style="font-size:10px;font-weight:700;color:var(--dark);line-height:1.2;margin:2px 0">${escH(ap)}</div>
+      <div style="font-size:15px;font-weight:800;color:${vc}">${display}</div>
+    </div>`;
+  }).join('');
+
+  // Estadísticas rápidas
+  const vals=c.students.map((_,i)=>getVal(i)).filter(v=>v!==null);
+  const promedio=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+  const altos=vals.filter(v=>v/max>=0.7).length;
+  const medios=vals.filter(v=>v/max>=0.5&&v/max<0.7).length;
+  const bajos=vals.filter(v=>v/max<0.5).length;
+
+  cont.innerHTML=`
+    <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:12px;font-weight:700;color:var(--green)">≥70%: ${altos}</span>
+      <span style="font-size:12px;font-weight:700;color:var(--yellow)">50-70%: ${medios}</span>
+      <span style="font-size:12px;font-weight:700;color:var(--red)"><50%: ${bajos}</span>
+      ${promedio!==null?`<span style="font-size:12px;font-weight:700;color:var(--muted)">Prom: ${promedio.toFixed(1)}</span>`:''}
+    </div>
+    <div class="board-sign" style="background:${color}">${label} — max ${max} pts</div>
+    <div class="seat-map">${seats}</div>
+    <div style="display:flex;gap:14px;justify-content:center;margin-top:10px" class="legend">
+      <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>≥70%</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--yellow)"></div>50-70%</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--red)"></div>&lt;50%</div>
+    </div>`;
+}
+
 function escH(str){
   return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
