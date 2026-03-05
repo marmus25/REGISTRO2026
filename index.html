@@ -678,6 +678,12 @@ function parseCourse(wb,fileName){
   } else {
     // MERGE INTELIGENTE
     const ex=appData.courses[courseId];
+    // Guardar datos de estudiantes manuales antes del merge
+    const gradesByManual={1:{},2:{},3:{}};
+    ex.students.filter(s=>s.manual).forEach(mst=>{
+      const oi=ex.students.indexOf(mst);
+      [1,2,3].forEach(t=>{gradesByManual[t][mst.nombre]=ex.grades[t][oi]||{ser:[],saber:[],hacer:[],auto:null};});
+    });
     const oldMap={};
     ex.students.forEach((st,oi)=>oldMap[st.nombre.trim().toUpperCase()]=oi);
     const newG={1:{},2:{},3:{}},newO={1:{},2:{},3:{}},newA={1:{},2:{},3:{}};
@@ -686,6 +692,7 @@ function parseCourse(wb,fileName){
       const key=st.nombre.trim().toUpperCase();
       if(oldMap[key]!==undefined){
         const oi=oldMap[key];
+        const wasOculto=ex.students[oi].oculto;
         [1,2,3].forEach(t=>{
           newG[t][ni]=ex.grades[t][oi]||{ser:[],saber:[],hacer:[],auto:null};
           if(ex.observations[t][oi]) newO[t][ni]=ex.observations[t][oi];
@@ -694,12 +701,55 @@ function parseCourse(wb,fileName){
             if(ex.attendance[t][d][oi]!==undefined) newA[t][d][ni]=ex.attendance[t][d][oi];
           });
         });
+        // Si estaba oculto y el Excel lo trae → restaurar automáticamente
+        if(wasOculto) setTimeout(()=>showToast('👁 '+st.nombre+' restaurado del Excel','ok'),600);
       } else {
         [1,2,3].forEach(t=>newG[t][ni]={ser:[],saber:[],hacer:[],auto:null});
         added.push(st.nombre);
       }
     });
     ex.students=students; ex.grades=newG; ex.observations=newO; ex.attendance=newA;
+    // Conservar estudiantes manuales que no están en el Excel
+    const excelNames=new Set(students.map(s=>s.nombre.trim().toUpperCase()));
+    const manualStudents=ex.students.filter(s=>s.manual && !excelNames.has(s.nombre.trim().toUpperCase()));
+    if(manualStudents.length){
+      manualStudents.forEach(mst=>{
+        const ni=ex.students.length;
+        ex.students.push(mst);
+        [1,2,3].forEach(t=>{
+          ex.grades[t][ni]=gradesByManual[t]?.[mst.nombre]||{ser:[],saber:[],hacer:[],auto:null};
+        });
+      });
+      ex.students.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+      // Reindexar tras reordenar
+      const gbn={},obn={},abn={};
+      [1,2,3].forEach(t=>{
+        gbn[t]={};obn[t]={};abn[t]={};
+        ex.students.forEach((st,i)=>{
+          gbn[t][st.nombre]=ex.grades[t][i]||{ser:[],saber:[],hacer:[],auto:null};
+          if(ex.observations[t][i]) obn[t][st.nombre]=ex.observations[t][i];
+        });
+        Object.keys(ex.attendance[t]).forEach(d=>{
+          abn[t][d]={};
+          ex.students.forEach((st,i)=>{
+            if(ex.attendance[t][d][i]!==undefined) abn[t][d][st.nombre]=ex.attendance[t][d][i];
+          });
+        });
+      });
+      const rG={1:{},2:{},3:{}},rO={1:{},2:{},3:{}},rA={1:{},2:{},3:{}};
+      ex.students.forEach((st,ni)=>{
+        [1,2,3].forEach(t=>{
+          rG[t][ni]=gbn[t][st.nombre]||{ser:[],saber:[],hacer:[],auto:null};
+          if(obn[t][st.nombre]) rO[t][ni]=obn[t][st.nombre];
+          Object.keys(abn[t]).forEach(d=>{
+            if(!rA[t][d]) rA[t][d]={};
+            if(abn[t][d][st.nombre]!==undefined) rA[t][d][ni]=abn[t][d][st.nombre];
+          });
+        });
+      });
+      ex.grades=rG; ex.observations=rO; ex.attendance=rA;
+      setTimeout(()=>showToast(manualStudents.length+' estudiante(s) TEMP conservado(s)','ok'),800);
+    }
     ex.meta.fileName=fileName; ex.meta.lastMerge=new Date().toISOString();
     if(added.length) setTimeout(()=>showToast(courseId+': '+added.length+' nuevo(s)','ok'),500);
   }
@@ -1362,6 +1412,10 @@ function renderResumen(){
     <div class="page-header">
       <div><div class="page-title">📊 ${escH(m.curso)} — Resumen</div>
         <div class="page-sub">${escH(m.area)} · Docente: ${escH(m.docente)}</div></div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-green btn-sm" onclick="addStudentManual()">➕ Agregar estudiante</button>
+        <button class="btn btn-outline btn-sm" onclick="toggleOcultos()" id="btn-ocultos">${c.students.filter(s=>s.oculto).length?'🙈 Ocultos ('+c.students.filter(s=>s.oculto).length+')':'🙈 Ocultos'}</button>
+      </div>
     </div>
     <div class="stats-row">
       <div class="stat-card"><div class="stat-val" style="color:var(--blue)">${c.students.length}</div>
@@ -1402,11 +1456,12 @@ function renderResumen(){
         </thead>
         <tbody>
           ${c.students.map((st,i)=>{
+            if(st.oculto) return '';
             const f1=countAtt(c,1,i,'F'),f2=countAtt(c,2,i,'F'),f3=countAtt(c,3,i,'F');
             const p1=calcTotal(c,1,i),p2=calcTotal(c,2,i),p3=calcTotal(c,3,i);
             return `<tr>
               <td class="td-nro">${st.nro}</td>
-              <td class="td-name">${escH(st.nombre)}</td>
+              <td class="td-name">${escH(st.nombre)}${st.manual?` <span style="font-size:9px;background:var(--yellow);color:#000;border-radius:3px;padding:1px 4px;font-weight:700">TEMP</span>`:''}</td>
               <td style="text-align:center;color:var(--muted)">${st.sexo}</td>
               <td style="text-align:center"><span style="font-size:11px;font-weight:700;color:${f1>3?'var(--red)':'var(--muted)'}">${f1}</span></td>
               <td style="text-align:center"><span style="font-size:11px;font-weight:700;color:${f2>3?'var(--red)':'var(--muted)'}">${f2}</span></td>
@@ -1414,6 +1469,10 @@ function renderResumen(){
               <td class="td-prom">${p1!==null?`<span class="badge ${scoreClass(p1,100)}">${Math.round(p1)}</span>`:'<span class="badge-n">—</span>'}</td>
               <td class="td-prom">${p2!==null?`<span class="badge ${scoreClass(p2,100)}">${Math.round(p2)}</span>`:'<span class="badge-n">—</span>'}</td>
               <td class="td-prom">${p3!==null?`<span class="badge ${scoreClass(p3,100)}">${Math.round(p3)}</span>`:'<span class="badge-n">—</span>'}</td>
+              <td style="text-align:center">
+                <button onclick="ocultarEstudiante(${i})" title="Ocultar estudiante"
+                  style="background:none;border:none;cursor:pointer;font-size:14px;opacity:.5">🙈</button>
+              </td>
             </tr>`;
           }).join('')}
         </tbody>
@@ -1509,6 +1568,7 @@ function renderAttList(trim){
   const tbody=document.getElementById(`att-body-${trim}`);
   if(!tbody) return;
   tbody.innerHTML=c.students.map((st,i)=>{
+    if(st.oculto) return '';
     const val=c.attendance[trim][date][i]||'';
     return `<tr>
       <td class="td-nro">${st.nro}</td><td class="td-name">${escH(st.nombre)}</td>
@@ -1557,12 +1617,13 @@ function renderSeatMap(trim){
   const dateEl=document.getElementById(`att-date-${trim}`);
   const date=dateEl?dateEl.value:new Date().toISOString().split('T')[0];
   if(!c.attendance[trim][date]) c.attendance[trim][date]={};
-  const seats=c.students.map((st,i)=>{
+  const seats=c.students.filter(s=>!s.oculto).map(s=>{
+    const i=c.students.indexOf(s);
     const val=c.attendance[trim][date][i]||'';
-    const ap=st.nombre.split(' ')[0];
-    return `<div class="seat ${val?'s'+val:'seat-empty'}" onclick="cycleSeat(this)"
-      data-trim="${trim}" data-date="${date}" data-idx="${i}" title="${st.nombre}">
-      <div class="seat-num">${st.nro}</div>
+    const ap=s.nombre.split(' ')[0];
+    return `<div class="seat ${val?'s'+val:'seat-empty'}" onclick="openAttPopup(this)"
+      data-trim="${trim}" data-date="${date}" data-idx="${i}" id="att-seat-${trim}-${i}" title="${s.nombre}">
+      <div class="seat-num">${s.nro}</div>
       <div class="seat-name">${escH(ap)}</div>
       <div class="seat-badge">${val||'·'}</div>
     </div>`;
@@ -1580,25 +1641,91 @@ function renderSeatMap(trim){
       </div>
     </div>
     <div class="board-sign">PIZARRÓN / FRENTE DEL AULA</div>
-    <div class="seat-map">${seats}</div>
-    <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center">
-      Toca un asiento: vacío → P → F → L → R → vacío
-    </div>`;
+    <div class="seat-map" style="margin-bottom:20px">${seats}</div>`;
+
+  // Popup overlay (se crea una vez)
+  if(!document.getElementById('att-popup-overlay')){
+    const ov=document.createElement('div');
+    ov.id='att-popup-overlay';
+    ov.style.cssText='display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.5);align-items:center;justify-content:center;';
+    ov.innerHTML=`
+      <div style="background:var(--white);border-radius:16px;padding:20px;width:280px;
+        box-shadow:0 8px 40px rgba(0,0,0,.4);text-align:center">
+        <div id="att-popup-name" style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px"></div>
+        <div id="att-popup-cur" style="font-size:11px;color:var(--muted);margin-bottom:16px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <button onclick="setAttVal('P')" style="padding:14px;border-radius:12px;border:none;
+            background:#dcfce7;color:#16a34a;font-size:20px;font-weight:900;cursor:pointer">
+            ✅ P
+          </button>
+          <button onclick="setAttVal('F')" style="padding:14px;border-radius:12px;border:none;
+            background:#fee2e2;color:#dc2626;font-size:20px;font-weight:900;cursor:pointer">
+            ❌ F
+          </button>
+          <button onclick="setAttVal('L')" style="padding:14px;border-radius:12px;border:none;
+            background:#fef9c3;color:#ca8a04;font-size:20px;font-weight:900;cursor:pointer">
+            ⏰ L
+          </button>
+          <button onclick="setAttVal('R')" style="padding:14px;border-radius:12px;border:none;
+            background:#dbeafe;color:#1d4ed8;font-size:20px;font-weight:900;cursor:pointer">
+            📄 R
+          </button>
+        </div>
+        <button onclick="setAttVal('')" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);
+          background:var(--s1);color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:8px">
+          🗑 Borrar
+        </button>
+        <button onclick="closeAttPopup()" style="width:100%;padding:10px;border-radius:8px;border:none;
+          background:var(--s2);color:var(--muted);font-size:12px;cursor:pointer">
+          Cancelar
+        </button>
+      </div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener('click',e=>{if(e.target===ov) closeAttPopup();});
+  }
+}
+
+let _attPopState={trim:null,date:null,idx:null};
+
+function openAttPopup(el){
+  const {trim,date,idx}=el.dataset;
+  _attPopState={trim:parseInt(trim),date,idx:parseInt(idx)};
+  const c=getCourse(); if(!c) return;
+  const st=c.students[_attPopState.idx];
+  const cur=c.attendance[_attPopState.trim][date]?.[_attPopState.idx]||'';
+  const labelMap={'P':'✅ Presente','F':'❌ Falta','L':'⏰ Llegada tarde','R':'📄 Con permiso','':"Sin marcar"};
+  document.getElementById('att-popup-name').textContent=st?.nombre||'';
+  document.getElementById('att-popup-cur').textContent='Estado actual: '+labelMap[cur];
+  const ov=document.getElementById('att-popup-overlay');
+  ov.style.display='flex';
+}
+
+function setAttVal(val){
+  const {trim,date,idx}=_attPopState;
+  const c=getCourse(); if(!c) return;
+  if(!c.attendance[trim][date]) c.attendance[trim][date]={};
+  if(val) c.attendance[trim][date][idx]=val;
+  else delete c.attendance[trim][date][idx];
+  markChanged();
+  // Actualizar casillero en tiempo real
+  const seat=document.getElementById(`att-seat-${trim}-${idx}`);
+  if(seat){
+    ['sP','sF','sL','sR','seat-empty'].forEach(cls=>seat.classList.remove(cls));
+    seat.classList.add(val?'s'+val:'seat-empty');
+    seat.querySelector('.seat-badge').textContent=val||'·';
+  }
+  closeAttPopup();
+}
+
+function closeAttPopup(){
+  const ov=document.getElementById('att-popup-overlay');
+  if(ov) ov.style.display='none';
+  _attPopState={trim:null,date:null,idx:null};
 }
 
 function cycleSeat(el){
-  const cycle=['','P','F','L','R'];
-  const {trim,date,idx}=el.dataset;
-  const c=getCourse(); if(!c) return;
-  const i=parseInt(idx),t=parseInt(trim);
-  if(!c.attendance[t][date]) c.attendance[t][date]={};
-  const cur=c.attendance[t][date][i]||'';
-  const next=cycle[(cycle.indexOf(cur)+1)%cycle.length];
-  if(next) c.attendance[t][date][i]=next; else delete c.attendance[t][date][i];
-  ['sP','sF','sL','sR','seat-empty'].forEach(cls=>el.classList.remove(cls));
-  el.classList.add(next?'s'+next:'seat-empty');
-  el.querySelector('.seat-badge').textContent=next||'·';
-  markChanged();
+  // Mantenido por compatibilidad - ahora usa popup
+  openAttPopup(el);
 }
 
 function updateSeatDate(trim,date){
@@ -1762,6 +1889,7 @@ function renderCalMobile(dim, trim){
 
   // Filas de estudiantes
   const rows = c.students.map((st,i)=>{
+    if(st.oculto) return '';
     const g=c.grades[trim][i]||{ser:[],saber:[],hacer:[],auto:null};
     const prom = isAuto ? g.auto : calcProm(c,trim,i,dim);
     const pc=getColor(prom, cfg.max);
@@ -1861,6 +1989,7 @@ function renderCalTotal(trim){
   };
 
   const rows=c.students.map((st,i)=>{
+    if(st.oculto) return '';
     const pS=calcProm(c,trim,i,'ser');
     const pSb=calcProm(c,trim,i,'saber');
     const pH=calcProm(c,trim,i,'hacer');
@@ -1909,6 +2038,79 @@ function renderCalTotal(trim){
         <tbody>${rows}</tbody>
       </table>
     </div>`;
+}
+
+function ocultarEstudiante(idx){
+  const c=getCourse(); if(!c) return;
+  const st=c.students[idx]; if(!st) return;
+  if(!confirm('¿Ocultar a '+st.nombre+'?\nSus datos se conservan y reaparecerá cuando el Excel lo incluya.')) return;
+  st.oculto=true;
+  markChanged();
+  renderResumen();
+  showToast('🙈 '+st.nombre+' ocultado','ok');
+  // Actualizar botón ocultos
+  const btn=document.getElementById('btn-ocultos');
+  if(btn){const n=c.students.filter(s=>s.oculto).length;btn.textContent='🙈 Ocultos ('+n+')';}
+}
+
+function toggleOcultos(){
+  const c=getCourse(); if(!c) return;
+  const ocultos=c.students.filter(s=>s.oculto);
+  if(!ocultos.length){showToast('No hay estudiantes ocultos','ok');return;}
+  const lista=ocultos.map((st,i)=>`${i+1}. ${st.nombre}`).join('\n');
+  const accion=confirm('Estudiantes ocultos:\n\n'+lista+'\n\n¿Restaurar todos?');
+  if(accion){
+    ocultos.forEach(st=>delete st.oculto);
+    markChanged();
+    renderResumen();
+    showToast('✅ Estudiantes restaurados','ok');
+  }
+}
+
+function addStudentManual(){
+  const c=getCourse(); if(!c) return;
+  const nombre=prompt('Nombre completo del estudiante\n(APELLIDOS NOMBRES):');
+  if(!nombre||!nombre.trim()) return;
+  const nom=nombre.trim().toUpperCase();
+  if(c.students.some(s=>s.nombre.trim().toUpperCase()===nom)){
+    showToast('Ese estudiante ya existe','err'); return;
+  }
+  // Guardar datos actuales por nombre antes de reordenar
+  const gradesByName={},obsByName={},attByName={};
+  [1,2,3].forEach(t=>{
+    gradesByName[t]={};obsByName[t]={};attByName[t]={};
+    c.students.forEach((st,i)=>{
+      gradesByName[t][st.nombre]=c.grades[t][i]||{ser:[],saber:[],hacer:[],auto:null};
+      if((c.observations[t]||{})[i]) obsByName[t][st.nombre]=c.observations[t][i];
+    });
+    Object.keys(c.attendance[t]).forEach(d=>{
+      attByName[t][d]={};
+      c.students.forEach((st,i)=>{
+        if(c.attendance[t][d][i]!==undefined) attByName[t][d][st.nombre]=c.attendance[t][d][i];
+      });
+    });
+  });
+  // Agregar nuevo estudiante con nro temporal y flag manual
+  const maxNro=c.students.reduce((m,s)=>Math.max(m,parseInt(s.nro)||0),0);
+  c.students.push({nro:maxNro+1, nombre:nom, sexo:'', manual:true});
+  // Ordenar alfabéticamente
+  c.students.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  // Reconstruir índices
+  const newG={1:{},2:{},3:{}},newO={1:{},2:{},3:{}},newA={1:{},2:{},3:{}};
+  c.students.forEach((st,ni)=>{
+    [1,2,3].forEach(t=>{
+      newG[t][ni]=gradesByName[t][st.nombre]||{ser:[],saber:[],hacer:[],auto:null};
+      if(obsByName[t][st.nombre]) newO[t][ni]=obsByName[t][st.nombre];
+      Object.keys(attByName[t]).forEach(d=>{
+        if(!newA[t][d]) newA[t][d]={};
+        if(attByName[t][d][st.nombre]!==undefined) newA[t][d][ni]=attByName[t][d][st.nombre];
+      });
+    });
+  });
+  c.grades=newG; c.observations=newO; c.attendance=newA;
+  markChanged();
+  renderResumen();
+  showToast('✅ '+nom+' agregado (TEMP)','ok');
 }
 
 function navEnter(e, input){
@@ -2129,37 +2331,197 @@ function updateMobilePromRow(trim, dim){
 function renderCalMap(trim){
   const c=getCourse(); if(!c) return;
   const cont=document.getElementById(`cal-content-${trim}`);
-  const buildMap=(label,bg,color,getVal,max)=>{
-    const seats=c.students.map((st,i)=>{
-      const val=getVal(i);
-      const pct=val!==null?val/max:null;
-      const bc=pct===null?'var(--border)':pct>=0.7?'var(--green)':pct>=0.5?'var(--yellow)':'var(--red)';
-      const bgc=pct===null?'var(--s1)':pct>=0.7?'var(--green-l)':pct>=0.5?'var(--yellow-l)':'var(--red-l)';
-      const vc=pct===null?'var(--muted)':pct>=0.7?'var(--green)':pct>=0.5?'var(--yellow)':'var(--red)';
-      const ap=st.nombre.split(' ')[0];
-      return `<div style="border-radius:8px;border:2px solid ${bc};background:${bgc};
-        padding:8px 4px;text-align:center;min-height:66px;display:flex;flex-direction:column;align-items:center">
-        <div style="font-size:9px;color:var(--muted);font-weight:600">${st.nro}</div>
-        <div style="font-size:11px;font-weight:700;color:var(--dark);line-height:1.2;margin:2px 0">${escH(ap)}</div>
-        <div style="font-size:13px;font-weight:800;color:${vc}">${val!==null?val:'—'}</div>
-      </div>`;
-    }).join('');
-    return `<div style="margin-bottom:20px">
-      <div class="board-sign" style="background:${color}">${label}</div>
-      <div class="seat-map">${seats}</div>
+  if(!window._mapState) window._mapState={};
+  if(!window._mapState[trim]) window._mapState[trim]={dim:'ser',actIdx:0};
+
+  cont.innerHTML=`
+    <div class="tabs" style="margin-bottom:10px" id="map-dim-tabs-${trim}">
+      <button class="tab active" onclick="setMapDim(${trim},'ser',this)">SER</button>
+      <button class="tab" onclick="setMapDim(${trim},'saber',this)">SABER</button>
+      <button class="tab" onclick="setMapDim(${trim},'hacer',this)">HACER</button>
+      <button class="tab" onclick="setMapDim(${trim},'auto',this)">AUTO</button>
+    </div>
+    <div id="map-act-tabs-${trim}" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
+    <div id="map-grid-${trim}"></div>
+    <div id="map-numpad-${trim}" style="display:none;position:fixed;bottom:0;left:0;right:0;
+      background:var(--white);border-top:3px solid var(--border);padding:12px;z-index:200;
+      box-shadow:0 -8px 30px rgba(0,0,0,.4)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div id="map-numpad-label-${trim}" style="font-size:12px;font-weight:700;color:var(--text);flex:1;margin-right:10px"></div>
+        <div id="map-numpad-display-${trim}"
+          style="font-size:32px;font-weight:900;color:var(--text);min-width:90px;text-align:right;
+          background:var(--s1);border-radius:10px;padding:6px 14px;border:2px solid var(--border)">—</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        ${[7,8,9,'⌫',4,5,6,'✓',1,2,3,'',0,'','',''].map(k=>`
+          <button onclick="numpadTap(${trim},'${k}')"
+            style="height:56px;border-radius:12px;font-size:22px;font-weight:800;cursor:pointer;
+            border:2px solid var(--border);
+            background:${k==='✓'?'#22c55e':k==='⌫'?'#fee2e2':'var(--s1)'};
+            color:${k==='✓'?'white':k==='⌫'?'#dc2626':'var(--text)'};
+            ${k===''?'visibility:hidden;':''}">
+            ${k}
+          </button>`).join('')}
+      </div>
+      <button onclick="closeNumpad(${trim})"
+        style="width:100%;margin-top:8px;padding:10px;border-radius:8px;border:none;
+        background:var(--s2);color:var(--muted);font-size:13px;cursor:pointer">
+        Cancelar
+      </button>
     </div>`;
+
+  renderMapActTabs(trim);
+  renderMapGrid(trim);
+}
+
+function setMapDim(trim,dim,btn){
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  window._mapState[trim].dim=dim;
+  window._mapState[trim].actIdx=0;
+  renderMapActTabs(trim);
+  renderMapGrid(trim);
+}
+
+function renderMapActTabs(trim){
+  const c=getCourse(); if(!c) return;
+  const st=window._mapState[trim];
+  const acts={ser:c.activities[trim].ser,saber:c.activities[trim].saber,
+    hacer:c.activities[trim].hacer,auto:['Auto']}[st.dim];
+  const cont=document.getElementById(`map-act-tabs-${trim}`);
+  if(!cont) return;
+  cont.innerHTML=`
+    <button onclick="setMapAct(${trim},-1,this)"
+      class="btn btn-sm ${st.actIdx===-1?'btn-blue':'btn-outline'}"
+      style="font-size:11px">Promedio</button>
+    ${acts.map((a,ai)=>`
+      <button onclick="setMapAct(${trim},${ai},this)"
+        class="btn btn-sm ${st.actIdx===ai?'btn-blue':'btn-outline'}"
+        style="font-size:11px">${escH(a.length>8?a.slice(0,8)+'…':a)}</button>`).join('')}`;
+}
+
+function setMapAct(trim,ai,btn){
+  window._mapState[trim].actIdx=ai;
+  btn.closest('div').querySelectorAll('button').forEach(b=>{
+    b.classList.remove('btn-blue');b.classList.add('btn-outline');
+  });
+  btn.classList.remove('btn-outline');btn.classList.add('btn-blue');
+  renderMapGrid(trim);
+}
+
+function renderMapGrid(trim){
+  const c=getCourse(); if(!c) return;
+  const cont=document.getElementById(`map-grid-${trim}`);
+  if(!cont) return;
+  const st=window._mapState[trim];
+  const cfg={ser:{max:10,color:'var(--ser-c)',label:'SER'},
+    saber:{max:45,color:'var(--saber-c)',label:'SABER'},
+    hacer:{max:40,color:'var(--hacer-c)',label:'HACER'},
+    auto:{max:5,color:'var(--auto-c)',label:'AUTO'}}[st.dim];
+
+  const getVal=(i)=>{
+    const g=(c.grades[trim]||{})[i]||{};
+    if(st.dim==='auto') return g.auto??null;
+    if(st.actIdx===-1) return calcProm(c,trim,i,st.dim);
+    return (g[st.dim]||[])[st.actIdx]??null;
   };
 
-  cont.innerHTML=
-    buildMap('SER — 10 pts','var(--ser-bg)','var(--ser-c)',i=>calcProm(c,trim,i,'ser'),10)+
-    buildMap('SABER — 45 pts','var(--saber-bg)','var(--saber-c)',i=>calcProm(c,trim,i,'saber'),45)+
-    buildMap('HACER — 40 pts','var(--hacer-bg)','var(--hacer-c)',i=>calcProm(c,trim,i,'hacer'),40)+
-    buildMap('TOTAL — 100 pts','var(--dark)','var(--dark)',i=>calcTotal(c,trim,i),100)+
-    `<div style="display:flex;gap:14px;justify-content:center" class="legend">
-      <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>≥70%</div>
-      <div class="leg"><div class="leg-dot" style="background:var(--yellow)"></div>50-70%</div>
-      <div class="leg"><div class="leg-dot" style="background:var(--red)"></div>&lt;50%</div>
+  const gc=(val)=>{
+    if(val===null) return {bc:'var(--border)',bgc:'var(--s1)',vc:'var(--muted)'};
+    const p=val/cfg.max;
+    if(p>=0.7) return {bc:'#22c55e',bgc:'#dcfce7',vc:'#16a34a'};
+    if(p>=0.5) return {bc:'#f59e0b',bgc:'#fef9c3',vc:'#ca8a04'};
+    return {bc:'#ef4444',bgc:'#fee2e2',vc:'#dc2626'};
+  };
+
+  const acts={ser:c.activities[trim].ser,saber:c.activities[trim].saber,
+    hacer:c.activities[trim].hacer,auto:['Auto']}[st.dim];
+  const actLabel=st.actIdx===-1?'Promedio':(acts[st.actIdx]||'Act.'+(st.actIdx+1));
+  const editable=st.actIdx!==-1;
+
+  const seats=c.students.filter(s=>!s.oculto).map(s=>{
+    const i=c.students.indexOf(s);
+    const val=getVal(i);
+    const {bc,bgc,vc}=gc(val);
+    const ap=s.nombre.split(' ')[0];
+    return `<div onclick="${editable?`openNumpad(${trim},${i},'${escH(actLabel)}',${cfg.max})`:'void(0)'}"
+      id="map-seat-${trim}-${i}"
+      style="border-radius:10px;border:2px solid ${bc};background:${bgc};
+      padding:10px 4px;text-align:center;cursor:${editable?'pointer':'default'};
+      display:flex;flex-direction:column;align-items:center;gap:2px;user-select:none">
+      <div style="font-size:9px;color:var(--muted);font-weight:700">${s.nro}</div>
+      <div style="font-size:11px;font-weight:800;color:var(--text);line-height:1.2">${escH(ap)}</div>
+      <div style="font-size:16px;font-weight:900;color:${vc}">${val!==null?val:'—'}</div>
     </div>`;
+  }).join('');
+
+  cont.innerHTML=`
+    <div class="board-sign" style="background:${cfg.color}">${cfg.label} — ${actLabel}</div>
+    <div class="seat-map" style="margin-bottom:80px">${seats}</div>`;
+}
+
+let _numState={trim:null,idx:null,max:null,val:''};
+
+function openNumpad(trim,idx,label,max){
+  _numState={trim,idx,max,val:''};
+  const c=getCourse(); const st=window._mapState[trim];
+  const g=(c.grades[trim]||{})[idx]||{};
+  let cur=st.dim==='auto'?g.auto:(g[st.dim]||[])[st.actIdx];
+  _numState.val=cur!=null?String(cur):'';
+  const nombre=c.students[idx]?.nombre.split(' ').slice(0,2).join(' ')||'';
+  document.getElementById(`map-numpad-label-${trim}`).textContent=nombre+' · '+label+' (máx '+max+')';
+  document.getElementById(`map-numpad-display-${trim}`).textContent=_numState.val||'—';
+  document.getElementById(`map-numpad-${trim}`).style.display='block';
+  const seat=document.getElementById(`map-seat-${trim}-${idx}`);
+  if(seat) seat.scrollIntoView({block:'center',behavior:'smooth'});
+}
+
+function closeNumpad(trim){
+  const pad=document.getElementById(`map-numpad-${trim}`);
+  if(pad) pad.style.display='none';
+  _numState={trim:null,idx:null,max:null,val:''};
+}
+
+function numpadTap(trim,key){
+  if(_numState.trim===null) return;
+  const disp=document.getElementById(`map-numpad-display-${trim}`);
+  if(key==='⌫'){
+    _numState.val=_numState.val.slice(0,-1);
+    if(disp) disp.textContent=_numState.val||'—';
+  } else if(key==='✓'){
+    const n=_numState.val===''?null:parseInt(_numState.val);
+    if(n!==null&&(n<0||n>_numState.max)){
+      if(disp){disp.style.color='#dc2626';disp.textContent='Máx '+_numState.max;}
+      setTimeout(()=>{if(disp){disp.style.color='var(--text)';disp.textContent=_numState.val||'—';}},800);
+      return;
+    }
+    const c=getCourse(); if(!c) return;
+    const st=window._mapState[trim];
+    if(!c.grades[trim][_numState.idx]) c.grades[trim][_numState.idx]={ser:[],saber:[],hacer:[],auto:null};
+    if(st.dim==='auto') c.grades[trim][_numState.idx].auto=n;
+    else{
+      if(!c.grades[trim][_numState.idx][st.dim]) c.grades[trim][_numState.idx][st.dim]=[];
+      c.grades[trim][_numState.idx][st.dim][st.actIdx]=n;
+    }
+    markChanged();
+    // Actualizar casillero en tiempo real
+    const cfg={ser:{max:10},saber:{max:45},hacer:{max:40},auto:{max:5}}[st.dim];
+    const pct=n!==null?n/cfg.max:null;
+    const bc=pct===null?'var(--border)':pct>=0.7?'#22c55e':pct>=0.5?'#f59e0b':'#ef4444';
+    const bgc=pct===null?'var(--s1)':pct>=0.7?'#dcfce7':pct>=0.5?'#fef9c3':'#fee2e2';
+    const vc=pct===null?'var(--muted)':pct>=0.7?'#16a34a':pct>=0.5?'#ca8a04':'#dc2626';
+    const seat=document.getElementById(`map-seat-${trim}-${_numState.idx}`);
+    if(seat){
+      seat.style.borderColor=bc; seat.style.background=bgc;
+      seat.querySelector('div:last-child').style.color=vc;
+      seat.querySelector('div:last-child').textContent=n!==null?n:'—';
+    }
+    closeNumpad(trim);
+  } else if(key!==''){
+    if(_numState.val.length>=3) return;
+    _numState.val+=key;
+    if(disp) disp.textContent=_numState.val||'—';
+  }
 }
 
 function getLevelClass(val, max){
