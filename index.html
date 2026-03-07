@@ -540,11 +540,18 @@ input[type=number]{-moz-appearance:textfield}
     </div>
     <input type="file" id="fi-xlsx" accept=".xlsx" multiple onchange="loadXLSX(this)" style="display:none">
     <div class="divider">o</div>
-    <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById('fi-json').click()">
+    <button class="btn btn-outline" style="width:100%;justify-content:center;padding:14px;font-size:14px" 
+      onclick="document.getElementById('fi-json').click()">
       📋 Cargar datos_todos_cursos.json (sesión anterior)
     </button>
     <input type="file" id="fi-json" accept=".json" onchange="loadJSON(this)" style="display:none">
     <div id="restore-area"></div>
+    <div style="margin-top:10px">
+      <button class="btn btn-outline" style="width:100%;justify-content:center;padding:12px;font-size:13px;opacity:.7"
+        onclick="entrarSinDatos()">
+        ➡️ Entrar sin datos (cargar Excel después)
+      </button>
+    </div>
     <div style="margin-top:16px;border:2px solid #3b82f6;border-radius:12px;padding:16px;background:#eff6ff">
       <p style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:10px;text-align:center">
         ☁️ ¿Ya tenés datos guardados en otro dispositivo?
@@ -1388,6 +1395,11 @@ function toggleSidebar() {
   layout.style.gridTemplateColumns = hidden ? '220px 1fr' : '1fr';
   btn.textContent = hidden ? '◀' : '▶';
   btn.title = hidden ? 'Ocultar sidebar' : 'Mostrar sidebar';
+}
+
+function entrarSinDatos(){
+  startApp();
+  showToast('Carga un Excel o JSON desde el menú Importar','ok');
 }
 
 window.addEventListener('load',()=>{
