@@ -2425,9 +2425,10 @@ function renderMapGrid(trim){
   const gc=(val)=>{
     if(val===null) return {bc:'var(--border)',bgc:'var(--s1)',vc:'var(--muted)'};
     const p=val/cfg.max;
-    if(p>=0.7) return {bc:'#22c55e',bgc:'#dcfce7',vc:'#16a34a'};
-    if(p>=0.5) return {bc:'#f59e0b',bgc:'#fef9c3',vc:'#ca8a04'};
-    return {bc:'#ef4444',bgc:'#fee2e2',vc:'#dc2626'};
+    const dk=document.documentElement.getAttribute('data-dark')==='1';
+    if(p>=0.7) return dk?{bc:'#16a34a',bgc:'#14532d',vc:'#86efac'}:{bc:'#22c55e',bgc:'#dcfce7',vc:'#15803d'};
+    if(p>=0.5) return dk?{bc:'#d97706',bgc:'#451a03',vc:'#fcd34d'}:{bc:'#f59e0b',bgc:'#fef9c3',vc:'#92400e'};
+    return dk?{bc:'#dc2626',bgc:'#450a0a',vc:'#fca5a5'}:{bc:'#ef4444',bgc:'#fee2e2',vc:'#b91c1c'};
   };
 
   const acts={ser:c.activities[trim].ser,saber:c.activities[trim].saber,
@@ -2456,10 +2457,92 @@ function renderMapGrid(trim){
     <div class="seat-map" style="margin-bottom:80px">${seats}</div>`;
 }
 
-let _numState={trim:null,idx:null,max:null};
+let _numState={trim:null,idx:null,max:null,label:''};
+
+// ── Teclas personalizadas para navegar entre estudiantes ──
+let _navKeys={prev:'PageUp',next:'PageDown'};
+(function(){try{const s=localStorage.getItem('navKeys2026');if(s)_navKeys=JSON.parse(s);}catch(e){} })();
+
+function openKeyConfig(){
+  const kn=k=>`<kbd style="display:inline-block;padding:3px 10px;border-radius:6px;
+    border:2px solid var(--border2);background:var(--card2);color:var(--text);
+    font-size:14px;font-weight:700;min-width:32px;text-align:center">${k}</kbd>`;
+  openModal(`<div class="modal-title">⌨️ Teclas de navegación</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">
+      Elige qué teclas del teclado físico mueven al alumno anterior/siguiente en el popup de nota.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span style="font-size:13px;color:var(--text)">◀ Alumno anterior</span>
+        <button id="kbtn-prev" onclick="startCapture('prev')"
+          style="padding:6px 16px;border-radius:8px;border:2px solid var(--border2);
+          background:var(--card2);color:var(--text);font-size:13px;cursor:pointer;min-width:120px">
+          ${kn(_navKeys.prev)}</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span style="font-size:13px;color:var(--text)">▶ Alumno siguiente</span>
+        <button id="kbtn-next" onclick="startCapture('next')"
+          style="padding:6px 16px;border-radius:8px;border:2px solid var(--border2);
+          background:var(--card2);color:var(--text);font-size:13px;cursor:pointer;min-width:120px">
+          ${kn(_navKeys.next)}</button>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:12px">
+      Haz clic en el botón y luego presiona la tecla que quieras asignar.<br>
+      Sugerencias: <b>PageUp/Down</b>, <b>F1/F2</b>, <b>,/.</b>, <b>[/]</b>, <b>-/+</b>
+    </p>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="resetNavKeys()">Restablecer</button>
+      <button class="btn btn-blue" onclick="closeModal()">Listo</button>
+    </div>`);
+}
+let _capturing=null;
+function startCapture(which){
+  _capturing=which;
+  const btn=document.getElementById('kbtn-'+which);
+  if(btn){btn.textContent='↩ Presiona una tecla...';btn.style.borderColor='var(--gold)';}
+}
+function resetNavKeys(){
+  _navKeys={prev:'PageUp',next:'PageDown'};
+  localStorage.setItem('navKeys2026',JSON.stringify(_navKeys));
+  closeModal(); openKeyConfig();
+}
+document.addEventListener('keydown',function(e){
+  if(!_capturing) return;
+  e.preventDefault(); e.stopPropagation();
+  const key=e.key;
+  _navKeys[_capturing]=key;
+  localStorage.setItem('navKeys2026',JSON.stringify(_navKeys));
+  _capturing=null;
+  closeModal(); openKeyConfig();
+},{capture:true});
+
+function navMapSeat(dir){
+  const c=getCourse(); if(!c) return;
+  const students=c.students.map((s,i)=>({s,i})).filter(x=>!x.s.oculto);
+  const cur=students.findIndex(x=>x.i===_numState.idx);
+  const next=students[cur+dir];
+  if(!next) return;
+  const st=window._mapState[_numState.trim];
+  const g=(c.grades[_numState.trim]||{})[next.i]||{};
+  const curVal=st.dim==='auto'?g.auto:(g[st.dim]||[])[st.actIdx];
+  const nombre=next.s.nombre.split(' ').slice(0,2).join(' ');
+  _numState.idx=next.i;
+  document.getElementById('map-inp-label').textContent=nombre+' \u2014 '+_numState.label+' (0\u2013'+_numState.max+')';
+  const inp=document.getElementById('map-inp-val');
+  inp.value=curVal!=null?curVal:'';
+  const cmt=document.getElementById('map-inp-comment');
+  if(cmt) cmt.value='';
+  const vis=students;
+  const newPos=vis.findIndex(x=>x.i===next.i);
+  const prev=document.getElementById('map-btn-prev');
+  const nxt=document.getElementById('map-btn-next');
+  if(prev) prev.style.opacity=newPos>0?'1':'0.3';
+  if(nxt) nxt.style.opacity=newPos<vis.length-1?'1':'0.3';
+  setTimeout(()=>{inp.focus();inp.select();},30);
+}
 
 function openNumpad(trim,idx,label,max){
-  _numState={trim,idx,max};
+  _numState={trim,idx,max,label};
   const c=getCourse(); const st=window._mapState[trim];
   const g=(c.grades[trim]||{})[idx]||{};
   let cur=st.dim==='auto'?g.auto:(g[st.dim]||[])[st.actIdx];
@@ -2471,17 +2554,37 @@ function openNumpad(trim,idx,label,max){
     popup=document.createElement('div');
     popup.id='map-input-popup';
     popup.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center';
-    popup.innerHTML=`<div style="background:var(--white);border-radius:16px;padding:20px;width:260px;
-      box-shadow:0 8px 40px rgba(0,0,0,.4);text-align:center">
-      <div id="map-inp-label" style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px"></div>
+    popup.innerHTML=`<div style="background:var(--white);border-radius:16px;padding:20px;width:300px;
+      max-width:94vw;box-shadow:0 8px 40px rgba(0,0,0,.4);text-align:center">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+        <button id="map-btn-prev" onclick="navMapSeat(-1)" title="Alumno anterior (${_navKeys.prev})"
+          style="padding:8px 14px;border-radius:10px;border:2px solid var(--border);
+          background:var(--s1);color:var(--text);font-size:18px;cursor:pointer;flex-shrink:0">◄</button>
+        <div style="flex:1">
+          <div id="map-inp-label" style="font-size:11px;font-weight:700;color:var(--muted);line-height:1.3"></div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px;opacity:.6">${_navKeys.prev} / ${_navKeys.next}</div>
+        </div>
+        <button id="map-btn-next" onclick="navMapSeat(1)" title="Alumno siguiente (${_navKeys.next})"
+          style="padding:8px 14px;border-radius:10px;border:2px solid var(--border);
+          background:var(--s1);color:var(--text);font-size:18px;cursor:pointer;flex-shrink:0">►</button>
+      </div>
       <input id="map-inp-val" type="number" min="0" inputmode="numeric"
         style="width:100%;font-size:36px;font-weight:900;text-align:center;padding:10px;
         border-radius:10px;border:3px solid var(--blue);background:var(--s1);color:var(--text);
-        box-sizing:border-box;margin-bottom:14px"
-        onkeydown="mapInputKey(event)">
+        box-sizing:border-box;margin-bottom:10px"
+        onkeydown="mapInputKey(event)"
+        oninput="const m=_numState.max;if(this.value!==''&&parseInt(this.value)>m){this.value=m;this.style.borderColor='#f59e0b';setTimeout(()=>this.style.borderColor='var(--blue)',600);}if(parseInt(this.value)<0)this.value=0;">
+      <textarea id="map-inp-comment" rows="2" placeholder="💬 Comentario para seguimiento (opcional)"
+        style="width:100%;font-size:13px;padding:8px 10px;border-radius:8px;resize:none;
+        border:2px solid var(--border);background:var(--s1);color:var(--text);
+        box-sizing:border-box;margin-bottom:10px;font-family:inherit"
+        onkeydown="if(event.key==='Escape'){event.preventDefault();cancelMapInput();}"></textarea>
       <div style="display:flex;gap:8px">
         <button onclick="confirmMapInput()" style="flex:1;padding:12px;border-radius:10px;border:none;
           background:#22c55e;color:white;font-size:16px;font-weight:800;cursor:pointer">✓ OK</button>
+        <button onclick="cancelMapInput()" title="Config teclas: ⚙️" onclick="openKeyConfig()"
+          style="padding:12px 10px;border-radius:10px;border:2px solid var(--border);
+          background:var(--s2);color:var(--muted);font-size:14px;cursor:pointer">⚙️</button>
         <button onclick="cancelMapInput()" style="flex:1;padding:12px;border-radius:10px;border:none;
           background:var(--s2);color:var(--muted);font-size:14px;cursor:pointer">Cancelar</button>
       </div>
@@ -2492,6 +2595,15 @@ function openNumpad(trim,idx,label,max){
   document.getElementById('map-inp-label').textContent=nombre+' — '+label+' (0–'+max+')';
   const inp=document.getElementById('map-inp-val');
   inp.max=max; inp.value=cur!=null?cur:'';
+  const cmt=document.getElementById('map-inp-comment');
+  if(cmt) cmt.value='';
+  const c2=getCourse();
+  const vis=c2?c2.students.map((s,i)=>({s,i})).filter(x=>!x.s.oculto):[];
+  const pos=vis.findIndex(x=>x.i===idx);
+  const pb=document.getElementById('map-btn-prev');
+  const nb=document.getElementById('map-btn-next');
+  if(pb) pb.style.opacity=pos>0?'1':'0.3';
+  if(nb) nb.style.opacity=pos<vis.length-1?'1':'0.3';
   popup.style.display='flex';
   setTimeout(()=>{inp.focus();inp.select();},50);
 }
@@ -2499,6 +2611,8 @@ function openNumpad(trim,idx,label,max){
 function mapInputKey(e){
   if(e.key==='Enter'){e.preventDefault();confirmMapInput();}
   else if(e.key==='Escape'){e.preventDefault();cancelMapInput();}
+  else if(e.key===_navKeys.next||e.key==='Tab'&&!e.shiftKey){e.preventDefault();confirmMapInput();navMapSeat(1);}
+  else if(e.key===_navKeys.prev||e.key==='Tab'&&e.shiftKey){e.preventDefault();confirmMapInput();navMapSeat(-1);}
 }
 
 function confirmMapInput(){
@@ -2512,6 +2626,24 @@ function confirmMapInput(){
     return;
   }
   saveMapGrade(_numState.trim,_numState.idx,n);
+  const cmt=(document.getElementById('map-inp-comment')?.value||'').trim();
+  if(cmt){
+    const co=getCourse();
+    if(co){
+      const t=_numState.trim; const i=_numState.idx;
+      const st=window._mapState[t];
+      if(!co.observations[t]) co.observations[t]={};
+      if(!co.observations[t][i]) co.observations[t][i]='';
+      const acts={ser:co.activities[t].ser,saber:co.activities[t].saber,
+        hacer:co.activities[t].hacer,auto:['Auto']}[st.dim];
+      const actName=(acts&&acts[st.actIdx])||('Act.'+(st.actIdx+1));
+      const ts=new Date().toLocaleDateString('es-BO');
+      const nota=n!==null?' ('+n+')':'';
+      const entry='['+ts+' '+actName+nota+']: '+cmt;
+      co.observations[t][i]=(co.observations[t][i]?co.observations[t][i]+'\n':'')+entry;
+      markChanged();
+    }
+  }
   cancelMapInput();
 }
 
@@ -2532,9 +2664,10 @@ function saveMapGrade(trim,idx,n){
   markChanged();
   const cfg={ser:{max:10},saber:{max:45},hacer:{max:40},auto:{max:5}}[st.dim];
   const pct=n!==null?n/cfg.max:null;
-  const bc=pct===null?'var(--border)':pct>=0.7?'#22c55e':pct>=0.5?'#f59e0b':'#ef4444';
-  const bgc=pct===null?'var(--s1)':pct>=0.7?'#dcfce7':pct>=0.5?'#fef9c3':'#fee2e2';
-  const vc=pct===null?'var(--muted)':pct>=0.7?'#16a34a':pct>=0.5?'#ca8a04':'#dc2626';
+  const dk=document.documentElement.getAttribute('data-dark')==='1';
+  const bc=pct===null?'var(--border)':pct>=0.7?(dk?'#16a34a':'#22c55e'):pct>=0.5?(dk?'#d97706':'#f59e0b'):(dk?'#dc2626':'#ef4444');
+  const bgc=pct===null?'var(--s1)':pct>=0.7?(dk?'#14532d':'#dcfce7'):pct>=0.5?(dk?'#451a03':'#fef9c3'):(dk?'#450a0a':'#fee2e2');
+  const vc=pct===null?'var(--muted)':pct>=0.7?(dk?'#86efac':'#15803d'):pct>=0.5?(dk?'#fcd34d':'#92400e'):(dk?'#fca5a5':'#b91c1c');
   const seat=document.getElementById(`map-seat-${trim}-${idx}`);
   if(seat){
     seat.style.borderColor=bc; seat.style.background=bgc;
@@ -3473,13 +3606,13 @@ function renderIndCard(idx){
       <div style="font-size:11px;color:var(--muted);margin-top:8px">
         F: ${faltas} · L: ${lic} · R: ${ret}
       </div>
-      ${obs?`<div style="font-size:11px;margin-top:6px;padding:6px 8px;background:var(--blue-l);border-radius:6px;color:var(--blue-d)">${escH(obs)}</div>`:''}
+      ${obs?`<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:6px"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px">💬 OBSERVACIONES</div>${obs.split('\n').filter(l=>l.trim()).map(l=>'<div style="font-size:11px;padding:4px 8px;background:var(--s1);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;margin-bottom:3px;color:var(--text)">'+escH(l)+'</div>').join('')}</div>`:''}
     </div>`;
   };
 
   document.getElementById('ind-body').innerHTML=`
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;
-      background:white;border:1px solid var(--border);border-radius:12px;padding:16px">
+      background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px">
       <div style="width:60px;height:60px;border-radius:50%;background:${color};
         display:flex;align-items:center;justify-content:center;font-size:22px;
         font-weight:800;color:white;flex-shrink:0">${initials}</div>
