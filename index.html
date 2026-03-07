@@ -540,18 +540,11 @@ input[type=number]{-moz-appearance:textfield}
     </div>
     <input type="file" id="fi-xlsx" accept=".xlsx" multiple onchange="loadXLSX(this)" style="display:none">
     <div class="divider">o</div>
-    <button class="btn btn-outline" style="width:100%;justify-content:center;padding:14px;font-size:14px" 
-      onclick="document.getElementById('fi-json').click()">
+    <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById('fi-json').click()">
       📋 Cargar datos_todos_cursos.json (sesión anterior)
     </button>
     <input type="file" id="fi-json" accept=".json" onchange="loadJSON(this)" style="display:none">
     <div id="restore-area"></div>
-    <div style="margin-top:10px">
-      <button class="btn btn-outline" style="width:100%;justify-content:center;padding:12px;font-size:13px;opacity:.7"
-        onclick="entrarSinDatos()">
-        ➡️ Entrar sin datos (cargar Excel después)
-      </button>
-    </div>
     <div style="margin-top:16px;border:2px solid #3b82f6;border-radius:12px;padding:16px;background:#eff6ff">
       <p style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:10px;text-align:center">
         ☁️ ¿Ya tenés datos guardados en otro dispositivo?
@@ -1397,11 +1390,6 @@ function toggleSidebar() {
   btn.title = hidden ? 'Ocultar sidebar' : 'Mostrar sidebar';
 }
 
-function entrarSinDatos(){
-  startApp();
-  showToast('Carga un Excel o JSON desde el menú Importar','ok');
-}
-
 window.addEventListener('load',()=>{
   const saved=localStorage.getItem('registroMusical2026');
   if(saved){
@@ -1682,47 +1670,36 @@ function renderSeatMap(trim){
     ov.id='att-popup-overlay';
     ov.style.cssText='display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.5);align-items:center;justify-content:center;';
     ov.innerHTML=`
-      <div style="background:var(--white);border-radius:16px;padding:20px;width:300px;
-        max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.4);text-align:center">
+      <div style="background:var(--white);border-radius:16px;padding:20px;width:280px;
+        box-shadow:0 8px 40px rgba(0,0,0,.4);text-align:center">
         <div id="att-popup-name" style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px"></div>
-        <div id="att-popup-cur" style="font-size:11px;color:var(--muted);margin-bottom:12px"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-          <button onclick="setAttVal('P')" style="padding:12px;border-radius:12px;border:none;
-            background:#dcfce7;color:#16a34a;font-size:18px;font-weight:900;cursor:pointer">
+        <div id="att-popup-cur" style="font-size:11px;color:var(--muted);margin-bottom:16px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <button onclick="setAttVal('P')" style="padding:14px;border-radius:12px;border:none;
+            background:#dcfce7;color:#16a34a;font-size:20px;font-weight:900;cursor:pointer">
             ✅ P
           </button>
-          <button onclick="setAttVal('F')" style="padding:12px;border-radius:12px;border:none;
-            background:#fee2e2;color:#dc2626;font-size:18px;font-weight:900;cursor:pointer">
+          <button onclick="setAttVal('F')" style="padding:14px;border-radius:12px;border:none;
+            background:#fee2e2;color:#dc2626;font-size:20px;font-weight:900;cursor:pointer">
             ❌ F
           </button>
-          <button onclick="setAttVal('L')" style="padding:12px;border-radius:12px;border:none;
-            background:#fef9c3;color:#ca8a04;font-size:18px;font-weight:900;cursor:pointer">
+          <button onclick="setAttVal('L')" style="padding:14px;border-radius:12px;border:none;
+            background:#fef9c3;color:#ca8a04;font-size:20px;font-weight:900;cursor:pointer">
             ⏰ L
           </button>
-          <button onclick="setAttVal('R')" style="padding:12px;border-radius:12px;border:none;
-            background:#dbeafe;color:#1d4ed8;font-size:18px;font-weight:900;cursor:pointer">
+          <button onclick="setAttVal('R')" style="padding:14px;border-radius:12px;border:none;
+            background:#dbeafe;color:#1d4ed8;font-size:20px;font-weight:900;cursor:pointer">
             📄 R
           </button>
         </div>
-        <button onclick="setAttVal('A')" style="width:100%;padding:12px;border-radius:12px;border:none;
-          background:#fde8ff;color:#7e22ce;font-size:18px;font-weight:900;cursor:pointer;margin-bottom:10px">
-          🚪 A — Abandono sin permiso
+        <button onclick="setAttVal('')" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);
+          background:var(--s1);color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:8px">
+          🗑 Borrar
         </button>
-        <input id="att-inp-comment" type="text" placeholder="💬 Observación (opcional)"
-          style="width:100%;font-size:13px;padding:8px 10px;border-radius:8px;
-          border:2px solid var(--border);background:var(--s1);color:var(--text);
-          box-sizing:border-box;margin-bottom:10px"
-          onkeydown="if(event.key==='Enter'){event.preventDefault();}">
-        <div style="display:flex;gap:8px">
-          <button onclick="setAttVal('')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);
-            background:var(--s1);color:var(--muted);font-size:12px;cursor:pointer">
-            🗑 Borrar
-          </button>
-          <button onclick="closeAttPopup()" style="flex:1;padding:9px;border-radius:8px;border:none;
-            background:var(--s2);color:var(--muted);font-size:12px;cursor:pointer">
-            Cancelar
-          </button>
-        </div>
+        <button onclick="closeAttPopup()" style="width:100%;padding:10px;border-radius:8px;border:none;
+          background:var(--s2);color:var(--muted);font-size:12px;cursor:pointer">
+          Cancelar
+        </button>
       </div>`;
     document.body.appendChild(ov);
     ov.addEventListener('click',e=>{if(e.target===ov) closeAttPopup();});
@@ -1737,11 +1714,9 @@ function openAttPopup(el){
   const c=getCourse(); if(!c) return;
   const st=c.students[_attPopState.idx];
   const cur=c.attendance[_attPopState.trim][date]?.[_attPopState.idx]||'';
-  const labelMap={'P':'✅ Presente','F':'❌ Falta','L':'⏰ Llegada tarde','R':'📄 Con permiso','A':'🚪 Abandono sin permiso','':"Sin marcar"};
+  const labelMap={'P':'✅ Presente','F':'❌ Falta','L':'⏰ Llegada tarde','R':'📄 Con permiso','':"Sin marcar"};
   document.getElementById('att-popup-name').textContent=st?.nombre||'';
   document.getElementById('att-popup-cur').textContent='Estado actual: '+labelMap[cur];
-  const cmtEl=document.getElementById('att-inp-comment');
-  if(cmtEl) cmtEl.value='';
   const ov=document.getElementById('att-popup-overlay');
   ov.style.display='flex';
 }
@@ -1752,22 +1727,11 @@ function setAttVal(val){
   if(!c.attendance[trim][date]) c.attendance[trim][date]={};
   if(val) c.attendance[trim][date][idx]=val;
   else delete c.attendance[trim][date][idx];
-  // Guardar comentario de asistencia si existe
-  const comment=(document.getElementById('att-inp-comment')?.value||'').trim();
-  if(comment){
-    if(!c.observations[trim]) c.observations[trim]={};
-    if(!c.observations[trim][idx]) c.observations[trim][idx]='';
-    const ts=new Date().toLocaleDateString('es-BO');
-    const labelMap={'P':'Presente','F':'Falta','L':'Llegada tarde','R':'Con permiso','A':'Abandono'};
-    const newEntry='['+ts+' Asistencia: '+(labelMap[val]||'Borrado')+'] '+comment;
-    c.observations[trim][idx]=c.observations[trim][idx]
-      ?(c.observations[trim][idx]+'
-'+newEntry):newEntry;
-  }
   markChanged();
+  // Actualizar casillero en tiempo real
   const seat=document.getElementById(`att-seat-${trim}-${idx}`);
   if(seat){
-    ['sP','sF','sL','sR','sA','seat-empty'].forEach(cls=>seat.classList.remove(cls));
+    ['sP','sF','sL','sR','seat-empty'].forEach(cls=>seat.classList.remove(cls));
     seat.classList.add(val?'s'+val:'seat-empty');
     seat.querySelector('.seat-badge').textContent=val||'·';
   }
@@ -2507,24 +2471,14 @@ function openNumpad(trim,idx,label,max){
     popup=document.createElement('div');
     popup.id='map-input-popup';
     popup.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center';
-    popup.innerHTML=`<div style="background:var(--white);border-radius:16px;padding:20px;width:300px;
-      max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.4);text-align:center">
+    popup.innerHTML=`<div style="background:var(--white);border-radius:16px;padding:20px;width:260px;
+      box-shadow:0 8px 40px rgba(0,0,0,.4);text-align:center">
       <div id="map-inp-label" style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px"></div>
       <input id="map-inp-val" type="number" min="0" inputmode="numeric"
         style="width:100%;font-size:36px;font-weight:900;text-align:center;padding:10px;
         border-radius:10px;border:3px solid var(--blue);background:var(--s1);color:var(--text);
-        box-sizing:border-box;margin-bottom:10px"
+        box-sizing:border-box;margin-bottom:14px"
         onkeydown="mapInputKey(event)">
-      <input id="map-inp-comment" type="text" placeholder="💬 Comentario (opcional)"
-        style="width:100%;font-size:13px;padding:8px 10px;border-radius:8px;
-        border:2px solid var(--border);background:var(--s1);color:var(--text);
-        box-sizing:border-box;margin-bottom:10px"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();confirmMapInput();}">
-      <button onclick="mapIrSeguimiento()" style="width:100%;padding:8px;border-radius:8px;
-        border:2px solid var(--border);background:var(--s1);color:var(--text);
-        font-size:12px;cursor:pointer;margin-bottom:10px">
-        👁 Ver seguimiento del estudiante
-      </button>
       <div style="display:flex;gap:8px">
         <button onclick="confirmMapInput()" style="flex:1;padding:12px;border-radius:10px;border:none;
           background:#22c55e;color:white;font-size:16px;font-weight:800;cursor:pointer">✓ OK</button>
@@ -2538,8 +2492,6 @@ function openNumpad(trim,idx,label,max){
   document.getElementById('map-inp-label').textContent=nombre+' — '+label+' (0–'+max+')';
   const inp=document.getElementById('map-inp-val');
   inp.max=max; inp.value=cur!=null?cur:'';
-  const cmt=document.getElementById('map-inp-comment');
-  if(cmt) cmt.value='';
   popup.style.display='flex';
   setTimeout(()=>{inp.focus();inp.select();},50);
 }
@@ -2559,21 +2511,8 @@ function confirmMapInput(){
     setTimeout(()=>{inp.style.borderColor='var(--blue)';inp.placeholder='';},800);
     return;
   }
-  const comment=(document.getElementById('map-inp-comment')?.value||'').trim();
-  saveMapGrade(_numState.trim,_numState.idx,n,comment);
+  saveMapGrade(_numState.trim,_numState.idx,n);
   cancelMapInput();
-}
-
-function mapIrSeguimiento(){
-  cancelMapInput();
-  // Guardar nota actual si hay valor
-  const inp=document.getElementById('map-inp-val');
-  const raw=inp?.value.trim();
-  const n=raw?parseInt(raw):null;
-  if(n!==null&&n>=0&&n<=_numState.max) saveMapGrade(_numState.trim,_numState.idx,n,'');
-  // Navegar a seguimiento
-  appData.currentSeguimientoIdx=_numState.idx;
-  nav('seg',null);
 }
 
 function cancelMapInput(){
@@ -2581,7 +2520,7 @@ function cancelMapInput(){
   if(popup) popup.style.display='none';
 }
 
-function saveMapGrade(trim,idx,n,comment=''){
+function saveMapGrade(trim,idx,n){
   const c=getCourse(); if(!c) return;
   const st=window._mapState[trim];
   if(!c.grades[trim][idx]) c.grades[trim][idx]={ser:[],saber:[],hacer:[],auto:null};
@@ -2589,20 +2528,6 @@ function saveMapGrade(trim,idx,n,comment=''){
   else{
     if(!c.grades[trim][idx][st.dim]) c.grades[trim][idx][st.dim]=[];
     c.grades[trim][idx][st.dim][st.actIdx]=n;
-  }
-  // Guardar comentario como observación si existe
-  if(comment){
-    if(!c.observations[trim]) c.observations[trim]={};
-    if(!c.observations[trim][idx]) c.observations[trim][idx]='';
-    const ts=new Date().toLocaleDateString('es-BO');
-    const acts={ser:c.activities[trim].ser,saber:c.activities[trim].saber,
-      hacer:c.activities[trim].hacer,auto:['Auto']}[st.dim];
-    const actName=acts[st.actIdx]||'Act.'+(st.actIdx+1);
-    const nota=n!==null?String(n):'—';
-    const newEntry='['+ts+' '+actName+': '+nota+'] '+comment;
-    c.observations[trim][idx]=c.observations[trim][idx]
-      ?(c.observations[trim][idx]+'
-'+newEntry):newEntry;
   }
   markChanged();
   const cfg={ser:{max:10},saber:{max:45},hacer:{max:40},auto:{max:5}}[st.dim];
