@@ -494,7 +494,11 @@ input[type=number]{-moz-appearance:textfield}
   <button id="sidebar-toggle" onclick="toggleSidebar()" title="Ocultar sidebar"
     style="background:#f8f9fa;border:1px solid #ced4da;border-radius:6px;
     padding:5px 10px;cursor:pointer;font-size:14px;color:#6c757d;
-    margin-right:4px;transition:all .15s" id="sidebar-toggle">◀</button>
+    margin-right:4px;transition:all .15s">◀</button>
+  <button onclick="toggleFullscreen()" id="btn-fullscreen" title="Pantalla completa"
+    style="background:#f8f9fa;border:1px solid #ced4da;border-radius:6px;
+    padding:5px 10px;cursor:pointer;font-size:14px;color:#6c757d;
+    margin-right:4px;transition:all .15s">⛶</button>
   <div class="header-right">
     <span id="net-status" title="Estado de conexión" style="font-size:13px;cursor:default">🟢</span>
     <span class="save-pill" id="save-ind">● Sin cambios</span>
@@ -594,6 +598,16 @@ input[type=number]{-moz-appearance:textfield}
       </div>
     </aside>
     <main class="main" id="main"></main>
+
+    <!-- BOTONES FLOTANTES LATERALES -->
+    <div id="float-nav" style="position:fixed;right:12px;top:50%;transform:translateY(-50%);
+      display:flex;flex-direction:column;gap:8px;z-index:150">
+      <button onclick="floatNav('resumen')" title="Resumen" class="float-btn" data-fn="resumen">📊</button>
+      <button onclick="floatNav('att1')" title="Asistencia T1" class="float-btn" data-fn="att1">📅</button>
+      <button onclick="floatNav('cal1')" title="Calificaciones T1" class="float-btn" data-fn="cal1">📝</button>
+      <button onclick="floatNav('calendario')" title="Calendario" class="float-btn" data-fn="calendario">🗓</button>
+      <button onclick="floatNav('seg')" title="Seguimiento" class="float-btn" data-fn="seg">👁</button>
+    </div>
   </div>
 </div>
 
@@ -1283,10 +1297,17 @@ function nav(sec,btn){
     'informe-curso':renderInformeCurso,'informe-ind':renderInformeInd,
     att1:()=>renderAtt(1),att2:()=>renderAtt(2),att3:()=>renderAtt(3),
     cal1:()=>renderCal(1),cal2:()=>renderCal(2),cal3:()=>renderCal(3),
-    seg:renderSeguimiento,
+    seg:renderSeguimiento,calendario:renderCalendario,
     obs1:()=>renderObs(1),obs2:()=>renderObs(2),obs3:()=>renderObs(3),
   };
   if(map[sec]) map[sec]();
+}
+
+function floatNav(sec){
+  document.querySelectorAll('.float-btn').forEach(b=>b.classList.remove('fn-active'));
+  const btn=document.querySelector(`.float-btn[data-fn="${sec}"]`);
+  if(btn) btn.classList.add('fn-active');
+  nav(sec,null);
 }
 
 // ════════════════════════════════════════════════
@@ -1649,36 +1670,47 @@ function renderSeatMap(trim){
     ov.id='att-popup-overlay';
     ov.style.cssText='display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.5);align-items:center;justify-content:center;';
     ov.innerHTML=`
-      <div style="background:var(--white);border-radius:16px;padding:20px;width:280px;
-        box-shadow:0 8px 40px rgba(0,0,0,.4);text-align:center">
+      <div style="background:var(--white);border-radius:16px;padding:20px;width:300px;
+        max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.4);text-align:center">
         <div id="att-popup-name" style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px"></div>
-        <div id="att-popup-cur" style="font-size:11px;color:var(--muted);margin-bottom:16px"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-          <button onclick="setAttVal('P')" style="padding:14px;border-radius:12px;border:none;
-            background:#dcfce7;color:#16a34a;font-size:20px;font-weight:900;cursor:pointer">
+        <div id="att-popup-cur" style="font-size:11px;color:var(--muted);margin-bottom:12px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <button onclick="setAttVal('P')" style="padding:12px;border-radius:12px;border:none;
+            background:#dcfce7;color:#16a34a;font-size:18px;font-weight:900;cursor:pointer">
             ✅ P
           </button>
-          <button onclick="setAttVal('F')" style="padding:14px;border-radius:12px;border:none;
-            background:#fee2e2;color:#dc2626;font-size:20px;font-weight:900;cursor:pointer">
+          <button onclick="setAttVal('F')" style="padding:12px;border-radius:12px;border:none;
+            background:#fee2e2;color:#dc2626;font-size:18px;font-weight:900;cursor:pointer">
             ❌ F
           </button>
-          <button onclick="setAttVal('L')" style="padding:14px;border-radius:12px;border:none;
-            background:#fef9c3;color:#ca8a04;font-size:20px;font-weight:900;cursor:pointer">
+          <button onclick="setAttVal('L')" style="padding:12px;border-radius:12px;border:none;
+            background:#fef9c3;color:#ca8a04;font-size:18px;font-weight:900;cursor:pointer">
             ⏰ L
           </button>
-          <button onclick="setAttVal('R')" style="padding:14px;border-radius:12px;border:none;
-            background:#dbeafe;color:#1d4ed8;font-size:20px;font-weight:900;cursor:pointer">
+          <button onclick="setAttVal('R')" style="padding:12px;border-radius:12px;border:none;
+            background:#dbeafe;color:#1d4ed8;font-size:18px;font-weight:900;cursor:pointer">
             📄 R
           </button>
         </div>
-        <button onclick="setAttVal('')" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--border);
-          background:var(--s1);color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:8px">
-          🗑 Borrar
+        <button onclick="setAttVal('A')" style="width:100%;padding:12px;border-radius:12px;border:none;
+          background:#fde8ff;color:#7e22ce;font-size:18px;font-weight:900;cursor:pointer;margin-bottom:10px">
+          🚪 A — Abandono sin permiso
         </button>
-        <button onclick="closeAttPopup()" style="width:100%;padding:10px;border-radius:8px;border:none;
-          background:var(--s2);color:var(--muted);font-size:12px;cursor:pointer">
-          Cancelar
-        </button>
+        <input id="att-inp-comment" type="text" placeholder="💬 Observación (opcional)"
+          style="width:100%;font-size:13px;padding:8px 10px;border-radius:8px;
+          border:2px solid var(--border);background:var(--s1);color:var(--text);
+          box-sizing:border-box;margin-bottom:10px"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();}">
+        <div style="display:flex;gap:8px">
+          <button onclick="setAttVal('')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);
+            background:var(--s1);color:var(--muted);font-size:12px;cursor:pointer">
+            🗑 Borrar
+          </button>
+          <button onclick="closeAttPopup()" style="flex:1;padding:9px;border-radius:8px;border:none;
+            background:var(--s2);color:var(--muted);font-size:12px;cursor:pointer">
+            Cancelar
+          </button>
+        </div>
       </div>`;
     document.body.appendChild(ov);
     ov.addEventListener('click',e=>{if(e.target===ov) closeAttPopup();});
@@ -1693,9 +1725,11 @@ function openAttPopup(el){
   const c=getCourse(); if(!c) return;
   const st=c.students[_attPopState.idx];
   const cur=c.attendance[_attPopState.trim][date]?.[_attPopState.idx]||'';
-  const labelMap={'P':'✅ Presente','F':'❌ Falta','L':'⏰ Llegada tarde','R':'📄 Con permiso','':"Sin marcar"};
+  const labelMap={'P':'✅ Presente','F':'❌ Falta','L':'⏰ Llegada tarde','R':'📄 Con permiso','A':'🚪 Abandono sin permiso','':"Sin marcar"};
   document.getElementById('att-popup-name').textContent=st?.nombre||'';
   document.getElementById('att-popup-cur').textContent='Estado actual: '+labelMap[cur];
+  const cmtEl=document.getElementById('att-inp-comment');
+  if(cmtEl) cmtEl.value='';
   const ov=document.getElementById('att-popup-overlay');
   ov.style.display='flex';
 }
@@ -1706,11 +1740,22 @@ function setAttVal(val){
   if(!c.attendance[trim][date]) c.attendance[trim][date]={};
   if(val) c.attendance[trim][date][idx]=val;
   else delete c.attendance[trim][date][idx];
+  // Guardar comentario de asistencia si existe
+  const comment=(document.getElementById('att-inp-comment')?.value||'').trim();
+  if(comment){
+    if(!c.observations[trim]) c.observations[trim]={};
+    if(!c.observations[trim][idx]) c.observations[trim][idx]='';
+    const ts=new Date().toLocaleDateString('es-BO');
+    const labelMap={'P':'Presente','F':'Falta','L':'Llegada tarde','R':'Con permiso','A':'Abandono'};
+    const newEntry='['+ts+' Asistencia: '+(labelMap[val]||'Borrado')+'] '+comment;
+    c.observations[trim][idx]=c.observations[trim][idx]
+      ?(c.observations[trim][idx]+'
+'+newEntry):newEntry;
+  }
   markChanged();
-  // Actualizar casillero en tiempo real
   const seat=document.getElementById(`att-seat-${trim}-${idx}`);
   if(seat){
-    ['sP','sF','sL','sR','seat-empty'].forEach(cls=>seat.classList.remove(cls));
+    ['sP','sF','sL','sR','sA','seat-empty'].forEach(cls=>seat.classList.remove(cls));
     seat.classList.add(val?'s'+val:'seat-empty');
     seat.querySelector('.seat-badge').textContent=val||'·';
   }
@@ -2343,32 +2388,7 @@ function renderCalMap(trim){
     </div>
     <div id="map-act-tabs-${trim}" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
     <div id="map-grid-${trim}"></div>
-    <div id="map-numpad-${trim}" style="display:none;position:fixed;bottom:0;left:0;right:0;
-      background:var(--white);border-top:3px solid var(--border);padding:12px;z-index:200;
-      box-shadow:0 -8px 30px rgba(0,0,0,.4)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div id="map-numpad-label-${trim}" style="font-size:12px;font-weight:700;color:var(--text);flex:1;margin-right:10px"></div>
-        <div id="map-numpad-display-${trim}"
-          style="font-size:32px;font-weight:900;color:var(--text);min-width:90px;text-align:right;
-          background:var(--s1);border-radius:10px;padding:6px 14px;border:2px solid var(--border)">—</div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-        ${[7,8,9,'⌫',4,5,6,'✓',1,2,3,'',0,'','',''].map(k=>`
-          <button onclick="numpadTap(${trim},'${k}')"
-            style="height:56px;border-radius:12px;font-size:22px;font-weight:800;cursor:pointer;
-            border:2px solid var(--border);
-            background:${k==='✓'?'#22c55e':k==='⌫'?'#fee2e2':'var(--s1)'};
-            color:${k==='✓'?'white':k==='⌫'?'#dc2626':'var(--text)'};
-            ${k===''?'visibility:hidden;':''}">
-            ${k}
-          </button>`).join('')}
-      </div>
-      <button onclick="closeNumpad(${trim})"
-        style="width:100%;margin-top:8px;padding:10px;border-radius:8px;border:none;
-        background:var(--s2);color:var(--muted);font-size:13px;cursor:pointer">
-        Cancelar
-      </button>
-    </div>`;
+`;  // no virtual numpad - uses system keyboard
 
   renderMapActTabs(trim);
   renderMapGrid(trim);
@@ -2460,68 +2480,137 @@ function renderMapGrid(trim){
     <div class="seat-map" style="margin-bottom:80px">${seats}</div>`;
 }
 
-let _numState={trim:null,idx:null,max:null,val:''};
+let _numState={trim:null,idx:null,max:null};
 
 function openNumpad(trim,idx,label,max){
-  _numState={trim,idx,max,val:''};
+  _numState={trim,idx,max};
   const c=getCourse(); const st=window._mapState[trim];
   const g=(c.grades[trim]||{})[idx]||{};
   let cur=st.dim==='auto'?g.auto:(g[st.dim]||[])[st.actIdx];
-  _numState.val=cur!=null?String(cur):'';
   const nombre=c.students[idx]?.nombre.split(' ').slice(0,2).join(' ')||'';
-  document.getElementById(`map-numpad-label-${trim}`).textContent=nombre+' · '+label+' (máx '+max+')';
-  document.getElementById(`map-numpad-display-${trim}`).textContent=_numState.val||'—';
-  document.getElementById(`map-numpad-${trim}`).style.display='block';
-  const seat=document.getElementById(`map-seat-${trim}-${idx}`);
-  if(seat) seat.scrollIntoView({block:'center',behavior:'smooth'});
-}
 
-function closeNumpad(trim){
-  const pad=document.getElementById(`map-numpad-${trim}`);
-  if(pad) pad.style.display='none';
-  _numState={trim:null,idx:null,max:null,val:''};
-}
-
-function numpadTap(trim,key){
-  if(_numState.trim===null) return;
-  const disp=document.getElementById(`map-numpad-display-${trim}`);
-  if(key==='⌫'){
-    _numState.val=_numState.val.slice(0,-1);
-    if(disp) disp.textContent=_numState.val||'—';
-  } else if(key==='✓'){
-    const n=_numState.val===''?null:parseInt(_numState.val);
-    if(n!==null&&(n<0||n>_numState.max)){
-      if(disp){disp.style.color='#dc2626';disp.textContent='Máx '+_numState.max;}
-      setTimeout(()=>{if(disp){disp.style.color='var(--text)';disp.textContent=_numState.val||'—';}},800);
-      return;
-    }
-    const c=getCourse(); if(!c) return;
-    const st=window._mapState[trim];
-    if(!c.grades[trim][_numState.idx]) c.grades[trim][_numState.idx]={ser:[],saber:[],hacer:[],auto:null};
-    if(st.dim==='auto') c.grades[trim][_numState.idx].auto=n;
-    else{
-      if(!c.grades[trim][_numState.idx][st.dim]) c.grades[trim][_numState.idx][st.dim]=[];
-      c.grades[trim][_numState.idx][st.dim][st.actIdx]=n;
-    }
-    markChanged();
-    // Actualizar casillero en tiempo real
-    const cfg={ser:{max:10},saber:{max:45},hacer:{max:40},auto:{max:5}}[st.dim];
-    const pct=n!==null?n/cfg.max:null;
-    const bc=pct===null?'var(--border)':pct>=0.7?'#22c55e':pct>=0.5?'#f59e0b':'#ef4444';
-    const bgc=pct===null?'var(--s1)':pct>=0.7?'#dcfce7':pct>=0.5?'#fef9c3':'#fee2e2';
-    const vc=pct===null?'var(--muted)':pct>=0.7?'#16a34a':pct>=0.5?'#ca8a04':'#dc2626';
-    const seat=document.getElementById(`map-seat-${trim}-${_numState.idx}`);
-    if(seat){
-      seat.style.borderColor=bc; seat.style.background=bgc;
-      seat.querySelector('div:last-child').style.color=vc;
-      seat.querySelector('div:last-child').textContent=n!==null?n:'—';
-    }
-    closeNumpad(trim);
-  } else if(key!==''){
-    if(_numState.val.length>=3) return;
-    _numState.val+=key;
-    if(disp) disp.textContent=_numState.val||'—';
+  // Crear popup de input inline si no existe
+  let popup=document.getElementById('map-input-popup');
+  if(!popup){
+    popup=document.createElement('div');
+    popup.id='map-input-popup';
+    popup.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center';
+    popup.innerHTML=`<div style="background:var(--white);border-radius:16px;padding:20px;width:300px;
+      max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.4);text-align:center">
+      <div id="map-inp-label" style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px"></div>
+      <input id="map-inp-val" type="number" min="0" inputmode="numeric"
+        style="width:100%;font-size:36px;font-weight:900;text-align:center;padding:10px;
+        border-radius:10px;border:3px solid var(--blue);background:var(--s1);color:var(--text);
+        box-sizing:border-box;margin-bottom:10px"
+        onkeydown="mapInputKey(event)">
+      <input id="map-inp-comment" type="text" placeholder="💬 Comentario (opcional)"
+        style="width:100%;font-size:13px;padding:8px 10px;border-radius:8px;
+        border:2px solid var(--border);background:var(--s1);color:var(--text);
+        box-sizing:border-box;margin-bottom:10px"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();confirmMapInput();}">
+      <button onclick="mapIrSeguimiento()" style="width:100%;padding:8px;border-radius:8px;
+        border:2px solid var(--border);background:var(--s1);color:var(--text);
+        font-size:12px;cursor:pointer;margin-bottom:10px">
+        👁 Ver seguimiento del estudiante
+      </button>
+      <div style="display:flex;gap:8px">
+        <button onclick="confirmMapInput()" style="flex:1;padding:12px;border-radius:10px;border:none;
+          background:#22c55e;color:white;font-size:16px;font-weight:800;cursor:pointer">✓ OK</button>
+        <button onclick="cancelMapInput()" style="flex:1;padding:12px;border-radius:10px;border:none;
+          background:var(--s2);color:var(--muted);font-size:14px;cursor:pointer">Cancelar</button>
+      </div>
+    </div>`;
+    popup.addEventListener('click',e=>{if(e.target===popup) cancelMapInput();});
+    document.body.appendChild(popup);
   }
+  document.getElementById('map-inp-label').textContent=nombre+' — '+label+' (0–'+max+')';
+  const inp=document.getElementById('map-inp-val');
+  inp.max=max; inp.value=cur!=null?cur:'';
+  const cmt=document.getElementById('map-inp-comment');
+  if(cmt) cmt.value='';
+  popup.style.display='flex';
+  setTimeout(()=>{inp.focus();inp.select();},50);
+}
+
+function mapInputKey(e){
+  if(e.key==='Enter'){e.preventDefault();confirmMapInput();}
+  else if(e.key==='Escape'){e.preventDefault();cancelMapInput();}
+}
+
+function confirmMapInput(){
+  const inp=document.getElementById('map-inp-val');
+  const raw=inp.value.trim();
+  const n=raw===''?null:parseInt(raw);
+  if(n!==null&&(n<0||n>_numState.max)){
+    inp.style.borderColor='#ef4444';
+    inp.value='';inp.placeholder='Máx '+_numState.max;
+    setTimeout(()=>{inp.style.borderColor='var(--blue)';inp.placeholder='';},800);
+    return;
+  }
+  const comment=(document.getElementById('map-inp-comment')?.value||'').trim();
+  saveMapGrade(_numState.trim,_numState.idx,n,comment);
+  cancelMapInput();
+}
+
+function mapIrSeguimiento(){
+  cancelMapInput();
+  // Guardar nota actual si hay valor
+  const inp=document.getElementById('map-inp-val');
+  const raw=inp?.value.trim();
+  const n=raw?parseInt(raw):null;
+  if(n!==null&&n>=0&&n<=_numState.max) saveMapGrade(_numState.trim,_numState.idx,n,'');
+  // Navegar a seguimiento
+  appData.currentSeguimientoIdx=_numState.idx;
+  nav('seg',null);
+}
+
+function cancelMapInput(){
+  const popup=document.getElementById('map-input-popup');
+  if(popup) popup.style.display='none';
+}
+
+function saveMapGrade(trim,idx,n,comment=''){
+  const c=getCourse(); if(!c) return;
+  const st=window._mapState[trim];
+  if(!c.grades[trim][idx]) c.grades[trim][idx]={ser:[],saber:[],hacer:[],auto:null};
+  if(st.dim==='auto') c.grades[trim][idx].auto=n;
+  else{
+    if(!c.grades[trim][idx][st.dim]) c.grades[trim][idx][st.dim]=[];
+    c.grades[trim][idx][st.dim][st.actIdx]=n;
+  }
+  // Guardar comentario como observación si existe
+  if(comment){
+    if(!c.observations[trim]) c.observations[trim]={};
+    if(!c.observations[trim][idx]) c.observations[trim][idx]='';
+    const ts=new Date().toLocaleDateString('es-BO');
+    const acts={ser:c.activities[trim].ser,saber:c.activities[trim].saber,
+      hacer:c.activities[trim].hacer,auto:['Auto']}[st.dim];
+    const actName=acts[st.actIdx]||'Act.'+(st.actIdx+1);
+    const nota=n!==null?String(n):'—';
+    const newEntry='['+ts+' '+actName+': '+nota+'] '+comment;
+    c.observations[trim][idx]=c.observations[trim][idx]
+      ?(c.observations[trim][idx]+'
+'+newEntry):newEntry;
+  }
+  markChanged();
+  const cfg={ser:{max:10},saber:{max:45},hacer:{max:40},auto:{max:5}}[st.dim];
+  const pct=n!==null?n/cfg.max:null;
+  const bc=pct===null?'var(--border)':pct>=0.7?'#22c55e':pct>=0.5?'#f59e0b':'#ef4444';
+  const bgc=pct===null?'var(--s1)':pct>=0.7?'#dcfce7':pct>=0.5?'#fef9c3':'#fee2e2';
+  const vc=pct===null?'var(--muted)':pct>=0.7?'#16a34a':pct>=0.5?'#ca8a04':'#dc2626';
+  const seat=document.getElementById(`map-seat-${trim}-${idx}`);
+  if(seat){
+    seat.style.borderColor=bc; seat.style.background=bgc;
+    seat.querySelector('div:last-child').style.color=vc;
+    seat.querySelector('div:last-child').textContent=n!==null?n:'—';
+  }
+}
+
+function closeNumpad(trim){ cancelMapInput(); }
+function numpadTap(trim,key){
+  if(key==='✓') confirmMapInput();
+  else if(key==='⌫'){const inp=document.getElementById('map-inp-val');if(inp)inp.value=inp.value.slice(0,-1);}
+  else if(key!==''){const inp=document.getElementById('map-inp-val');if(inp)inp.value+=key;}
 }
 
 function getLevelClass(val, max){
@@ -3806,9 +3895,305 @@ function updateNetStatus(){
   if(navigator.onLine){el.textContent='🟢';el.title='Online';}
   else{el.textContent='🟠';el.title='Offline — modo sin conexión';}
 }
+function toggleFullscreen(){
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen().catch(()=>{});
+    document.getElementById('btn-fullscreen').textContent='✕';
+    document.getElementById('btn-fullscreen').title='Salir de pantalla completa';
+  } else {
+    document.exitFullscreen();
+    document.getElementById('btn-fullscreen').textContent='⛶';
+    document.getElementById('btn-fullscreen').title='Pantalla completa';
+  }
+}
+document.addEventListener('fullscreenchange',()=>{
+  const btn=document.getElementById('btn-fullscreen');
+  if(!btn) return;
+  btn.textContent=document.fullscreenElement?'✕':'⛶';
+});
+
 window.addEventListener('online', updateNetStatus);
 window.addEventListener('offline', updateNetStatus);
 document.addEventListener('DOMContentLoaded', updateNetStatus);
+
+// ════════════════════════════════════════════════
+// TECLADO FÍSICO EN MAPA DE CALIFICACIONES
+// ════════════════════════════════════════════════
+let _mapFocus={trim:null,idx:null}; // casillero actualmente enfocado
+
+document.addEventListener('keydown', e=>{
+  // Solo actuar si hay un mapa de calificaciones visible
+  const trim=_mapFocus.trim;
+  if(trim===null) return;
+  const c=getCourse(); if(!c) return;
+  const visibles=c.students.map((s,i)=>({s,i})).filter(({s})=>!s.oculto);
+
+  // Si popup de input está abierto — dejar que el input maneje el teclado
+  const popup=document.getElementById('map-input-popup');
+  if(popup&&popup.style.display!=='none') return;
+
+  // Navegación entre casilleros con flechas
+  if(['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(e.key)){
+    e.preventDefault();
+    const pos=visibles.findIndex(({i})=>i===_mapFocus.idx);
+    const cols=4; // columnas del seat-map
+    let next=pos;
+    if(e.key==='ArrowRight') next=Math.min(pos+1,visibles.length-1);
+    else if(e.key==='ArrowLeft') next=Math.max(pos-1,0);
+    else if(e.key==='ArrowDown') next=Math.min(pos+cols,visibles.length-1);
+    else if(e.key==='ArrowUp') next=Math.max(pos-cols,0);
+    if(next!==pos){
+      focusMapSeat(trim, visibles[next].i);
+    }
+    return;
+  }
+
+  // Número directo abre numpad con ese dígito
+  if(e.key>='0'&&e.key<='9'&&_mapFocus.idx!==null){
+    e.preventDefault();
+    const st=window._mapState[trim];
+    if(st.actIdx===-1) return; // promedio = solo lectura
+    const cfg={ser:{max:10,label:'SER'},saber:{max:45,label:'SABER'},
+      hacer:{max:40,label:'HACER'},auto:{max:5,label:'AUTO'}}[st.dim];
+    const acts={ser:c.activities[trim].ser,saber:c.activities[trim].saber,
+      hacer:c.activities[trim].hacer,auto:['Auto']}[st.dim];
+    const actLabel=acts[st.actIdx]||'Act.'+(st.actIdx+1);
+    openNumpad(trim,_mapFocus.idx,actLabel,cfg.max);
+    setTimeout(()=>numpadTap(trim,e.key),50);
+    return;
+  }
+});
+
+function focusMapSeat(trim, idx){
+  // Quitar foco anterior
+  if(_mapFocus.idx!==null){
+    const prev=document.getElementById(`map-seat-${trim}-${_mapFocus.idx}`);
+    if(prev) prev.style.outline='';
+  }
+  _mapFocus={trim,idx};
+  const seat=document.getElementById(`map-seat-${trim}-${idx}`);
+  if(seat){
+    seat.style.outline='3px solid var(--blue)';
+    seat.scrollIntoView({block:'nearest',behavior:'smooth'});
+  }
+}
+
+// Activar foco al hacer click en casillero del mapa
+document.addEventListener('click', e=>{
+  const seat=e.target.closest('[id^="map-seat-"]');
+  if(seat){
+    const parts=seat.id.split('-');
+    const trim=parseInt(parts[2]), idx=parseInt(parts[3]);
+    _mapFocus={trim,idx};
+  }
+});
+
+// Desactivar foco al salir del mapa
+function deactivateMapFocus(){
+  if(_mapFocus.trim!==null&&_mapFocus.idx!==null){
+    const seat=document.getElementById(`map-seat-${_mapFocus.trim}-${_mapFocus.idx}`);
+    if(seat) seat.style.outline='';
+  }
+  _mapFocus={trim:null,idx:null};
+}
+
+// ════════════════════════════════════════════════
+// CALENDARIO DE PLANIFICACIÓN
+// ════════════════════════════════════════════════
+function renderCalendario(){
+  if(!appData.calendario) appData.calendario=[];
+  const hoy=new Date();
+  const añoActual=hoy.getFullYear();
+  const mesActual=hoy.getMonth();
+  if(!window._calView) window._calView={año:añoActual,mes:mesActual};
+
+  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const TIPO_CFG={
+    clase:{label:'Clase/Tema',color:'#3b82f6',bg:'#dbeafe',icon:'📚'},
+    eval:{label:'Evaluación',color:'#ef4444',bg:'#fee2e2',icon:'📝'},
+    entrega:{label:'Entrega notas',color:'#f59e0b',bg:'#fef9c3',icon:'📤'},
+    evento:{label:'Evento colegio',color:'#8b5cf6',bg:'#ede9fe',icon:'🏫'},
+  };
+
+  const {año,mes}=window._calView;
+  const primerDia=new Date(año,mes,1).getDay();
+  const diasEnMes=new Date(año,mes+1,0).getDate();
+
+  // Eventos del mes
+  const evMes=appData.calendario.filter(ev=>{
+    const d=new Date(ev.fecha+'T12:00:00');
+    return d.getFullYear()===año&&d.getMonth()===mes;
+  });
+
+  // Construir grid del calendario
+  let celdas='';
+  // Días de la semana header
+  DIAS.forEach(d=>{ celdas+=`<div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:4px">${d}</div>`; });
+  // Celdas vacías iniciales
+  for(let i=0;i<primerDia;i++) celdas+=`<div></div>`;
+  // Días del mes
+  for(let d=1;d<=diasEnMes;d++){
+    const fechaStr=`${año}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const evDia=appData.calendario.filter(ev=>ev.fecha===fechaStr);
+    const esHoy=d===hoy.getDate()&&mes===hoy.getMonth()&&año===hoy.getFullYear();
+    const dots=evDia.map(ev=>TIPO_CFG[ev.tipo]?.color||'#888').slice(0,3)
+      .map(c=>`<div style="width:6px;height:6px;border-radius:50%;background:${c}"></div>`).join('');
+    celdas+=`<div onclick="abrirDiaCal('${fechaStr}')" style="
+      border-radius:8px;padding:6px 4px;text-align:center;cursor:pointer;min-height:52px;
+      background:${esHoy?'var(--blue)':'var(--s1)'};
+      border:2px solid ${esHoy?'var(--blue)':'var(--border)'};
+      transition:background .1s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+      <div style="font-size:13px;font-weight:${esHoy?'900':'600'};color:${esHoy?'white':'var(--text)'}">${d}</div>
+      <div style="display:flex;gap:2px;justify-content:center;flex-wrap:wrap;margin-top:2px">${dots}</div>
+    </div>`;
+  }
+
+  // Lista de eventos del mes ordenados
+  const listaEv=evMes.sort((a,b)=>a.fecha.localeCompare(b.fecha)).map((ev,ei)=>{
+    const cfg=TIPO_CFG[ev.tipo]||{color:'#888',bg:'#eee',icon:'📌',label:'Otro'};
+    const d=new Date(ev.fecha+'T12:00:00');
+    const dLabel=`${d.getDate()} ${MESES[d.getMonth()].slice(0,3)}`;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;
+      background:${cfg.bg};border-left:4px solid ${cfg.color};margin-bottom:8px">
+      <div style="font-size:20px">${cfg.icon}</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:800;color:${cfg.color}">${dLabel} — ${cfg.label}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${escH(ev.titulo)}</div>
+        ${ev.curso?`<div style="font-size:11px;color:var(--muted)">${escH(ev.curso)}</div>`:''}
+        ${ev.notas?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${escH(ev.notas)}</div>`:''}
+      </div>
+      <button onclick="eliminarEvCal(${ei})" style="background:none;border:none;cursor:pointer;
+        font-size:16px;opacity:.5;padding:4px" title="Eliminar">🗑</button>
+    </div>`;
+  }).join('') || `<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px">Sin eventos este mes</div>`;
+
+  document.getElementById('main').innerHTML=`
+    <div class="page-header">
+      <div><div class="page-title">🗓 Calendario de Planificación</div>
+        <div class="page-sub">${MESES[mes]} ${año}</div></div>
+      <button class="btn btn-green btn-sm" onclick="abrirNuevoEvCal()">+ Nuevo evento</button>
+    </div>
+
+    <!-- Navegación mes -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <button class="btn btn-outline btn-sm" onclick="navMes(-1)">◀ Anterior</button>
+      <div style="font-weight:800;font-size:15px;color:var(--text)">${MESES[mes]} ${año}</div>
+      <button class="btn btn-outline btn-sm" onclick="navMes(1)">Siguiente ▶</button>
+    </div>
+
+    <!-- Grid calendario -->
+    <div class="card" style="margin-bottom:20px">
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">${celdas}</div>
+      <!-- Leyenda -->
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
+        ${Object.entries(TIPO_CFG).map(([k,v])=>`
+          <div style="display:flex;align-items:center;gap:4px;font-size:11px">
+            <div style="width:10px;height:10px;border-radius:50%;background:${v.color}"></div>
+            ${v.icon} ${v.label}
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Lista eventos del mes -->
+    <div style="font-weight:800;font-size:13px;color:var(--text);margin-bottom:10px">
+      Eventos de ${MESES[mes]} (${evMes.length})
+    </div>
+    ${listaEv}
+
+    <!-- Modal nuevo evento (oculto) -->
+    <div id="cal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+      z-index:400;align-items:center;justify-content:center">
+      <div style="background:var(--white);border-radius:16px;padding:20px;width:320px;
+        max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.4)">
+        <div style="font-weight:800;font-size:15px;margin-bottom:16px;color:var(--text)">📅 Nuevo evento</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--muted)">TIPO</label>
+            <select id="cal-tipo" style="width:100%;padding:8px;border-radius:8px;border:2px solid var(--border);background:var(--s1);color:var(--text);font-size:13px">
+              ${Object.entries(TIPO_CFG).map(([k,v])=>`<option value="${k}">${v.icon} ${v.label}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--muted)">FECHA</label>
+            <input id="cal-fecha" type="date" style="width:100%;padding:8px;border-radius:8px;border:2px solid var(--border);background:var(--s1);color:var(--text);font-size:13px;box-sizing:border-box"
+              value="${new Date().toISOString().split('T')[0]}">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--muted)">TÍTULO</label>
+            <input id="cal-titulo" type="text" placeholder="Ej: Examen parcial SER" style="width:100%;padding:8px;border-radius:8px;border:2px solid var(--border);background:var(--s1);color:var(--text);font-size:13px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--muted)">CURSO (opcional)</label>
+            <select id="cal-curso" style="width:100%;padding:8px;border-radius:8px;border:2px solid var(--border);background:var(--s1);color:var(--text);font-size:13px">
+              <option value="">Todos los cursos</option>
+              ${Object.values(appData.courses||{}).map(c=>`<option value="${escH(c.meta.curso)}">${escH(c.meta.curso)}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--muted)">NOTAS (opcional)</label>
+            <input id="cal-notas" type="text" placeholder="Detalle adicional..." style="width:100%;padding:8px;border-radius:8px;border:2px solid var(--border);background:var(--s1);color:var(--text);font-size:13px;box-sizing:border-box">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button onclick="guardarEvCal()" class="btn btn-green" style="flex:1">✅ Guardar</button>
+          <button onclick="cerrarCalModal()" class="btn btn-outline" style="flex:1">Cancelar</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function navMes(dir){
+  let {año,mes}=window._calView;
+  mes+=dir;
+  if(mes<0){mes=11;año--;}
+  if(mes>11){mes=0;año++;}
+  window._calView={año,mes};
+  renderCalendario();
+}
+
+function abrirNuevoEvCal(){
+  const modal=document.getElementById('cal-modal');
+  if(modal) modal.style.display='flex';
+}
+
+function abrirDiaCal(fecha){
+  const modal=document.getElementById('cal-modal');
+  if(modal){
+    document.getElementById('cal-fecha').value=fecha;
+    modal.style.display='flex';
+    document.getElementById('cal-titulo').focus();
+  }
+}
+
+function cerrarCalModal(){
+  const modal=document.getElementById('cal-modal');
+  if(modal) modal.style.display='none';
+}
+
+function guardarEvCal(){
+  const tipo=document.getElementById('cal-tipo').value;
+  const fecha=document.getElementById('cal-fecha').value;
+  const titulo=document.getElementById('cal-titulo').value.trim();
+  const curso=document.getElementById('cal-curso').value;
+  const notas=document.getElementById('cal-notas').value.trim();
+  if(!fecha||!titulo){showToast('Completa fecha y título','err');return;}
+  if(!appData.calendario) appData.calendario=[];
+  appData.calendario.push({tipo,fecha,titulo,curso,notas});
+  markChanged();
+  cerrarCalModal();
+  renderCalendario();
+  showToast('✅ Evento guardado','ok');
+}
+
+function eliminarEvCal(idx){
+  if(!confirm('¿Eliminar este evento?')) return;
+  appData.calendario.splice(idx,1);
+  markChanged();
+  renderCalendario();
+  showToast('Evento eliminado','ok');
+}
 </script>
 </body>
 </html>
